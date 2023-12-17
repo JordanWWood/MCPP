@@ -1,0 +1,16 @@
+
+*.exe
+
+obj/Win64/Debug/
+
+.idea/
+
+.vs/
+
+*.sln
+
+*.vcxproj
+
+*.filters
+
+bin64/
