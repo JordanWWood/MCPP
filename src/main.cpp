@@ -1,18 +1,14 @@
-#include <iostream>
 
-#include "Networking/TCPServer.h"
+#include "Core/MCServer.h"
 
 int main(int argc, char** argv)
 {
-    CTCPServer server(25565);
-    server.Listen();
+    CMCServer server;
 
-    // Network loop
-    while(true)
+    if (server.Init(25565))
     {
-        server.AcceptConnection();
-        server.RecvPackets();
+        while(server.Run()) {}
     }
-        
+    
     return 0;
 }

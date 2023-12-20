@@ -7,10 +7,30 @@
 
 #define MAX_STRING_LENGTH 32767
 
-class BasePacket
+enum class EClientState
 {
+    eCS_Handshake,
+    eCS_Status,
+    eCS_Login,
+    eCS_Configuration,
+    eCS_Play
+};
+
+class CBasePacket
+{
+public:
+    virtual char* Deserialize(char* start) = 0;
+    
 protected:
-    uint32_t DeserializeVarInt(char* start, uint32_t& end)
+    static uint16_t DeserializeShort(char* start, uint32_t& offset)
+    {
+        offset += 2;
+        
+        uint16_t reverseInt = *reinterpret_cast<uint16_t*>(start);
+        return (reverseInt << 8) | ((reverseInt >> 8) & 0x00ff);
+    }
+    
+    static uint32_t DeserializeVarInt(char* start, uint32_t& end)
     {
         uint32_t value = 0;
         int position = 0;
@@ -33,13 +53,13 @@ protected:
         return value;
     }
 
-    std::string DeserializeString(char* start, uint32_t maxSize, uint32_t& offset)
+    static std::string DeserializeString(char* start, uint32_t maxSize, uint32_t& offset)
     {
         if(maxSize >= MAX_STRING_LENGTH)
             return "";
         
         uint32_t length = static_cast<uint32_t>(*start);
-        offset = length + 1;
+        offset = offset + length + 1;
 
         // Plus one since we want to trim the string length
         std::string string(start + 1, length);

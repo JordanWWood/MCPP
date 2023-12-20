@@ -11,6 +11,8 @@ CTCPServer::~CTCPServer()
 {
     if (m_listenSocket != INVALID_SOCKET)
         closesocket(m_listenSocket);
+
+    WSACleanup();
 }
 
 bool CTCPServer::Listen()
@@ -93,47 +95,19 @@ bool CTCPServer::Listen()
     return true;
 }
 
-bool CTCPServer::AcceptConnection()
+IClientPtr CTCPServer::AcceptConnection() const
 {
-    printf("Waiting for connection to accept\n");
-
-    SOCKET socket = INVALID_SOCKET;
-    
-    socket = accept(m_listenSocket, nullptr, nullptr);
+    SOCKET socket = accept(m_listenSocket, nullptr, nullptr);
     if(socket == INVALID_SOCKET)
     {
         if(WSAGetLastError() == WSAEWOULDBLOCK)
-        {
-            printf("WSAEWOULDBLOCK\n");
-            return false;
-        }
-        // TOOD logging
+            return nullptr;
+
+        printf("Accept failed with error: %d\n", WSAGetLastError());
 
         closesocket(m_listenSocket);
-        WSACleanup();
-        return false;
+        return nullptr;
     }
-
-    m_clients.emplace_back(socket);
     
-    return true;
-}
-
-bool CTCPServer::RecvPackets()
-{
-    for (std::vector<CTCPClient>::iterator it = m_clients.begin(); it != m_clients.end(); )
-    {
-        CTCPClient& client = *it;
-        TTCPClientBundlePtr bundle = client.RecvPackets();
-
-        if(client.GetSocketState() == ESocketState::eSS_CLOSED)
-        {
-            it = m_clients.erase(it); // This socket is finished. Remove it
-            continue;
-        }
-
-        ++it;
-    }
-
-    return true;
+    return std::make_shared<CGameClient>(socket);
 }

@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "stdafx.h"
-#include "TCPClient.h"
+#include "GameClient.h"
 
 // TODO tidy up includes
 #ifdef _WIN32
@@ -16,23 +16,24 @@
 #include <nunistd.h>
 #endif
 
+using IClientPtr = std::shared_ptr<IClient>;
+
 class CTCPServer
 {
 public:
-    CTCPServer() = default;
     CTCPServer(const uint16_t port);
     ~CTCPServer();
 
+    // Initialise a port and listen on said port for incoming connections
     bool Listen();
-    bool AcceptConnection();
-    bool RecvPackets();
+
+    // Check for any incoming connections, accept and create a port if there are any
+    IClientPtr AcceptConnection() const;
+    bool IsSocketClosed() const { return m_listenSocketState == ESocketState::eSS_CLOSED; }
 
 private:
     SOCKET m_listenSocket { INVALID_SOCKET };
-
-    // TODO more than one client socket
-    std::vector<CTCPClient> m_clients;
-    
-    const uint16_t m_port{ 25565 };
     ESocketState m_listenSocketState { ESocketState::eSS_UNINITIALISED };
+
+    const uint16_t m_port{ 25565 };
 };
