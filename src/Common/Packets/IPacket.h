@@ -1,4 +1,5 @@
 ﻿#pragma once
+
 #include <cstdint>
 #include <string>
 
@@ -7,7 +8,7 @@
 
 #define MAX_STRING_LENGTH 32767
 
-enum class EClientState
+enum class EClientState : uint8_t
 {
     eCS_Handshake,
     eCS_Status,
@@ -16,17 +17,18 @@ enum class EClientState
     eCS_Play
 };
 
-class CBasePacket
+class IPacket
 {
 public:
-    virtual char* Deserialize(char* start) = 0;
+    virtual ~IPacket() = default;
+    virtual void Deserialize(char* start) = 0;
     
 protected:
     static uint16_t DeserializeShort(char* start, uint32_t& offset)
     {
         offset += 2;
-        
-        uint16_t reverseInt = *reinterpret_cast<uint16_t*>(start);
+
+        const uint16_t reverseInt = *reinterpret_cast<uint16_t*>(start);
         return (reverseInt << 8) | ((reverseInt >> 8) & 0x00ff);
     }
     

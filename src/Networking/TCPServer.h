@@ -1,9 +1,9 @@
 ﻿#pragma once
 
-#include <vector>
+#include <memory>
 
+#include "SocketUtils.h"
 #include "stdafx.h"
-#include "GameClient.h"
 
 // TODO tidy up includes
 #ifdef _WIN32
@@ -16,7 +16,8 @@
 #include <nunistd.h>
 #endif
 
-using IClientPtr = std::shared_ptr<IClient>;
+struct IConnection;
+using IConnectionPtr = std::shared_ptr<IConnection>;
 
 class CTCPServer
 {
@@ -28,7 +29,7 @@ public:
     bool Listen();
 
     // Check for any incoming connections, accept and create a port if there are any
-    IClientPtr AcceptConnection() const;
+    IConnectionPtr AcceptConnection() const;
     bool IsSocketClosed() const { return m_listenSocketState == ESocketState::eSS_CLOSED; }
 
 private:

@@ -1,8 +1,7 @@
 ﻿#include "TCPServer.h"
 
-#include <string>
-#include <iostream>
 #include <spdlog/spdlog.h>
+#include "ClientConnection.h"
 
 #pragma comment(lib, "Ws2_32.lib")
 
@@ -102,12 +101,12 @@ bool CTCPServer::Listen()
     return true;
 }
 
-IClientPtr CTCPServer::AcceptConnection() const
+IConnectionPtr CTCPServer::AcceptConnection() const
 {
     struct sockaddr_in sa = { 0 }; /* for TCP/IP */
     socklen_t socklen = sizeof sa;
 
-    SOCKET socket = accept(m_listenSocket, (struct sockaddr*)&sa, &socklen);
+    SOCKET socket = accept(m_listenSocket, reinterpret_cast<struct sockaddr*>(&sa), &socklen);
     if(socket == INVALID_SOCKET)
     {
         if(WSAGetLastError() == WSAEWOULDBLOCK)
@@ -121,5 +120,5 @@ IClientPtr CTCPServer::AcceptConnection() const
 
     spdlog::info("Accepting connection from {}", inet_ntoa(sa.sin_addr));
     
-    return std::make_shared<CGameClient>(socket);
+    return std::make_shared<CClientConnection>(socket);
 }

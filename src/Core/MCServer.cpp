@@ -5,14 +5,16 @@
 
 #include <spdlog/spdlog.h>
 
+#include "MCPlayer.h"
+
 #define MAIN_THREAD_UPDATE_RATE 20
 #define NETWORK_THREAD_UPDATE_RATE 120
 
 using TMainThreadFrame = std::chrono::duration<int64_t, std::ratio<1, MAIN_THREAD_UPDATE_RATE>>;
 using TNetworkThreadFrame = std::chrono::duration<int64_t, std::ratio<1, NETWORK_THREAD_UPDATE_RATE>>;
 
-#define THREAD_UPDATE_BEGIN(frame) auto nextFrame = std::chrono::system_clock::now() + frame{1};
-#define THREAD_UPDATE_END() std::this_thread::sleep_until(nextFrame);
+#define THREAD_UPDATE_BEGIN(frame) auto nextFrame = std::chrono::system_clock::now() + frame{1}
+#define THREAD_UPDATE_END() std::this_thread::sleep_until(nextFrame)
 
 static void NetworkThread(CMCServer* mcServer)
 {
@@ -55,27 +57,30 @@ void CMCServer::NetworkRun()
         if (m_pTcpServer->IsSocketClosed())
             break;
 
-        // Network update
-        // 1 Accept new connections
-        if (IClientPtr pClient = m_pTcpServer->AcceptConnection())
-            m_clients.push_back(pClient);
-
-        // 2 Process packets
-        // TODO move to own threads
-        for (std::vector<IClientPtr>::iterator it = m_clients.begin(); it != m_clients.end();)
         {
-            IClientPtr& client = *it;
-            bool result = client->RecvPackets();
+            std::lock_guard<std::mutex> lock(m_networkLock); 
+            
+            // Network update
+            // 1 Accept new connections
+            if (IConnectionPtr pClient = m_pTcpServer->AcceptConnection())
+                m_players.emplace_back(pClient);
 
-            if (client->IsSocketClosed())
+            // 2 Process packets
+            // TODO move to own threads
+            for (std::vector<CMCPlayer>::iterator it = m_players.begin(); it != m_players.end();)
             {
-                it = m_clients.erase(it); // This client is no longer connected. Remove it
-                continue;
-            }
+                CMCPlayer& player = *it;
+                player.RecvPackets();
 
-            ++it;
+                if (player.IsDead())
+                {
+                  it = m_players.erase(it); // This client is no longer connected. Remove it
+                    continue;
+                }
+
+                ++it;
+            }
         }
-        
 
         THREAD_UPDATE_END();
     }

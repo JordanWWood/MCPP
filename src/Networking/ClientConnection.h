@@ -2,25 +2,24 @@
 
 #include <memory>
 
+#include "Common\IConnection.h"
+#include "Common\IPacketHandler.h"
 #include "SocketUtils.h"
-#include "Common/IClient.h"
-#include "Packets/BasePacket.h"
 
-class CGameClient : public IClient
+class CClientConnection : public IConnection
 {
 public:
-    CGameClient(uint64_t socket)
+    CClientConnection(uint64_t socket)
         : m_clientSocket(socket)
     {}
-    
-    ~CGameClient();
 
-    virtual bool RecvPackets() final;
+    ~CClientConnection() override;
+
+    virtual bool RecvPackets(IPacketHandler* pHandler) final;
     virtual bool IsSocketClosed() const final { return m_socketState == ESocketState::eSS_CLOSED; }
     
 private:
     uint64_t m_clientSocket;
     
     ESocketState m_socketState{ ESocketState::eSS_CONNECTED };
-    EClientState m_clientState{ EClientState::eCS_Handshake };
 };
