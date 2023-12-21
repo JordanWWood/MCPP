@@ -47,10 +47,16 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
             SPacketPayload payload;
             payload.m_packetId = packetId;
             payload.m_size = payloadSize;
-            payload.m_payload = new char[payloadSize];
 
-            // We trim the first two bytes (size & packetId) since we've already read that infomration
-            memcpy(payload.m_payload, start + 2, payloadSize);
+            // If payload size is zero then this is a packet that has no payload. E.G. Status Request
+            // No point allocating a payload if that is the case
+            if (payloadSize > 0)
+            {
+                payload.m_payload = new char[payloadSize];
+
+                // We trim the first two bytes (size & packetId) since we've already read that infomration
+                memcpy(payload.m_payload, start + 2, payloadSize);
+            }
 
             // Shift the start to the beginning of the next packet
             start = &start[payloadSize + 2];
@@ -69,7 +75,9 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
 
     if (iResult == 0)
     {
-        // We're done processing the queue.
+        spdlog::info("Client connection disconnected");
+        closesocket(m_clientSocket);
+        m_socketState = ESocketState::eSS_CLOSED;
         return true;
     }
 
@@ -89,7 +97,20 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
     return false;
 }
 
-bool SendPackets()
+bool CClientConnection::SendPacket(SPacketPayload&& payload)
 {
+    char* sendBuffer = new char[payload.m_size];
+    memcpy(sendBuffer, payload.m_payload, payload.m_size);
+
+    int iResult = send(m_clientSocket, sendBuffer, payload.m_size, 0);
+    if (iResult == SOCKET_ERROR)
+    {
+        spdlog::error("Failed to send payload to client. Error[{}]", WSAGetLastError());
+
+        m_socketState = ESocketState::eSS_CLOSED;
+        closesocket(m_clientSocket);
+        return false;
+    }
     
+    return false;
 }

@@ -22,6 +22,7 @@ class IPacket
 public:
     virtual ~IPacket() = default;
     virtual void Deserialize(char* start) = 0;
+    virtual SPacketPayload Serialize() = 0;
     
 protected:
     static uint16_t DeserializeShort(char* start, uint32_t& offset)

@@ -74,8 +74,9 @@ void CMCServer::NetworkRun()
 
                 if (player.IsDead())
                 {
-                  it = m_players.erase(it); // This client is no longer connected. Remove it
-                    continue;
+                    spdlog::info("Client has disconnected. Username[{}]", player.GetUsername());
+                    it = m_players.erase(it); // This client is no longer connected. Remove it
+                        continue;
                 }
 
                 ++it;

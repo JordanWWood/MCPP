@@ -6,6 +6,7 @@
 #include "Common/Packets/IPacket.h"
 #include "Common/PacketPayload.h"
 #include "Common/Packets/LoginStart.h"
+#include "Common/Packets/StatusResponse.h"
 
 // TODO do something better than this
 #define PROTOCOL_VERSION 765
@@ -24,12 +25,13 @@ bool CMCPlayer::ProcessPacket(SPacketPayload&& payload)
     {
     case EClientState::eCS_Handshake:
         return HandleHandshake(std::move(payload));
+        
     case EClientState::eCS_Login:
         return HandleLogin(std::move(payload));
-        break;
+        
     case EClientState::eCS_Status:
-        // TODO
-        break;
+        return HandleStatus(std::move(payload));
+
     case EClientState::eCS_Configuration:
         // TODO
         break;
@@ -73,5 +75,34 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
         return true;
     }
 
+    return true;
+}
+
+bool CMCPlayer::HandleStatus(SPacketPayload&& payload)
+{
+    // Status request. Packet should have no payload
+    if(payload.m_packetId == 0)
+    {
+        // If we do have a payload this is not the packet we think it is
+        if(payload.m_payload)
+            return false;
+
+        SStatusResponse response;
+        m_pConnection->SendPacket(response.Serialize());
+    }
+
+    if(payload.m_packetId == 1)
+    {
+        SPacketPayload newPayload;
+        newPayload.m_size = payload.m_size + 1;
+        newPayload.m_payload = new char[newPayload.m_size + 1];
+
+        newPayload.m_payload[0] = newPayload.m_size;
+        newPayload.m_payload[1] = payload.m_size;
+
+        memcpy(&newPayload.m_payload[2], payload.m_payload, payload.m_size);
+        m_pConnection->SendPacket(std::move(newPayload));
+    }
+    
     return true;
 }

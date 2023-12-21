@@ -2,6 +2,7 @@
 #include <cstdint>
 
 #include "IPacket.h"
+#include "Common/PacketPayload.h"
 
 struct SHandshake final : public IPacket
 {
@@ -12,6 +13,12 @@ struct SHandshake final : public IPacket
         m_address = DeserializeString(&start[offset], 32, offset);
         m_port = DeserializeShort(&start[offset], offset);
         m_nextState = static_cast<uint8_t>(start[offset]);
+    }
+
+    virtual SPacketPayload Serialize() override
+    {
+        // TODO
+        return SPacketPayload();
     }
     
     uint32_t m_protocolVersion { 0 };

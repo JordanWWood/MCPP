@@ -16,6 +16,7 @@ public:
     ~CClientConnection() override;
 
     virtual bool RecvPackets(IPacketHandler* pHandler) final;
+    virtual bool SendPacket(SPacketPayload&& payload) final;
     virtual bool IsSocketClosed() const final { return m_socketState == ESocketState::eSS_CLOSED; }
     
 private:

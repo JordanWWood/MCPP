@@ -23,9 +23,11 @@ public:
     virtual bool ProcessPacket(SPacketPayload&& payload) final;
 
     bool IsDead() const { return m_pConnection->IsSocketClosed(); }
+    std::string GetUsername() const { return m_username; }
 private:
     bool HandleHandshake(SPacketPayload&& payload);
     bool HandleLogin(SPacketPayload&& payload);
+    bool HandleStatus(SPacketPayload&& payload);
 
     std::string m_username;
     
