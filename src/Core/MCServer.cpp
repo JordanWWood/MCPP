@@ -1,56 +1,84 @@
 ﻿#include "MCServer.h"
 
 #include <chrono>
-#include <thread>
+#include <iostream>
 
-#define UPDATE_RATE 20
+#include <spdlog/spdlog.h>
 
-CMCServer::CMCServer()
-    : m_pTcpServer(std::make_unique<CTCPServer>(25565))
+#define MAIN_THREAD_UPDATE_RATE 20
+#define NETWORK_THREAD_UPDATE_RATE 120
+
+using TMainThreadFrame = std::chrono::duration<int64_t, std::ratio<1, MAIN_THREAD_UPDATE_RATE>>;
+using TNetworkThreadFrame = std::chrono::duration<int64_t, std::ratio<1, NETWORK_THREAD_UPDATE_RATE>>;
+
+#define THREAD_UPDATE_BEGIN(frame) auto nextFrame = std::chrono::system_clock::now() + frame{1};
+#define THREAD_UPDATE_END() std::this_thread::sleep_until(nextFrame);
+
+static void NetworkThread(CMCServer* mcServer)
+{
+    mcServer->NetworkRun();
+}
+
+CMCServer::CMCServer(uint16_t port)
+    : m_pTcpServer(std::make_unique<CTCPServer>(port))
 {
 }
 
-bool CMCServer::Init(uint16_t port)
+bool CMCServer::Init()
 {
-    return m_pTcpServer->Listen();
+    spdlog::info("Initialising MC Server");
+    m_networkThread = std::thread(NetworkThread, this);
+
+    return true;
 }
 
 bool CMCServer::Run()
 {
-    auto start = std::chrono::high_resolution_clock::now();
+    THREAD_UPDATE_BEGIN(TMainThreadFrame);
 
-    // TODO we should reestablish the listen socket if it closes. For now the application just exits
-    if(m_pTcpServer->IsSocketClosed())
-        return false;
     
-    // Network update
-    // 1 Accept new connections
-    if(IClientPtr pClient = m_pTcpServer->AcceptConnection())
-        m_clients.push_back(pClient);
 
-    // 2 Process packets
-    // TODO move to own threads
-    for (std::vector<IClientPtr>::iterator it = m_clients.begin(); it != m_clients.end();)
+    THREAD_UPDATE_END();
+
+    return m_quit == false;
+}
+
+void CMCServer::NetworkRun()
+{
+    m_quit = !m_pTcpServer->Listen();
+
+    while (!m_quit)
     {
-        IClientPtr& client = *it;
-        bool result = client->RecvPackets();
+        THREAD_UPDATE_BEGIN(TNetworkThreadFrame);
 
-        if (client->IsSocketClosed())
+        // TODO we should reestablish the listen socket if it closes. For now the application just exits
+        if (m_pTcpServer->IsSocketClosed())
+            break;
+
+        // Network update
+        // 1 Accept new connections
+        if (IClientPtr pClient = m_pTcpServer->AcceptConnection())
+            m_clients.push_back(pClient);
+
+        // 2 Process packets
+        // TODO move to own threads
+        for (std::vector<IClientPtr>::iterator it = m_clients.begin(); it != m_clients.end();)
         {
-            it = m_clients.erase(it); // This client is no longer connected. Remove it
-            continue;
-        }
+            IClientPtr& client = *it;
+            bool result = client->RecvPackets();
 
-        ++it;
+            if (client->IsSocketClosed())
+            {
+                it = m_clients.erase(it); // This client is no longer connected. Remove it
+                continue;
+            }
+
+            ++it;
+        }
+        
+
+        THREAD_UPDATE_END();
     }
 
-    
-
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsedTime = end-start;
-    
-    if (elapsedTime < std::chrono::milliseconds(1000 / UPDATE_RATE))
-        std::this_thread::sleep_until(start + std::chrono::milliseconds(33));
-
-    return true;
+    m_quit = true;
 }

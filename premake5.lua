@@ -7,7 +7,7 @@ project "MCPP"
     language "C++"
     targetdir "bin64/%{cfg.buildcfg}"
     
-    includedirs { "src" }
+    includedirs { "src", "vendor" }
 
     files { "src/**.h", "src/**.cpp" }
 

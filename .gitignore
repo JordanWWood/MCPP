@@ -14,3 +14,7 @@ obj/Win64/Debug/
 *.filters
 
 bin64/
+
+*.log
+
+*.user

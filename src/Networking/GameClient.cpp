@@ -3,6 +3,9 @@
 #include <cstdio>
 #include <memory>
 #include <string>
+#include <vector>
+
+#include <spdlog/spdlog.h>
 
 #ifdef _WIN32
 #include <WinSock2.h>
@@ -14,6 +17,14 @@
 
 // TODO do something better than this
 #define PROTOCOL_VERSION 765
+
+struct SPacketPayload
+{
+    uint8_t m_packetId{ 0 };
+    
+    char* m_payload{ nullptr };
+    uint8_t m_size{ 0 };
+};
 
 struct SHandShake final : CBasePacket // TODO packets
 {
@@ -44,19 +55,38 @@ bool CGameClient::RecvPackets()
 {
     char recvBuffer[DEFAULT_BUFLEN];
     constexpr int recvBufferLength{ DEFAULT_BUFLEN };
+
+    ZeroMemory(&recvBuffer, recvBufferLength);
     
     const int iResult = recv(m_clientSocket, recvBuffer, recvBufferLength, 0);
     if (iResult > 0)
     {
-        char* end = nullptr;
+        char* start = recvBuffer;
+
+        std::vector<SPacketPayload> payloads;
+
+        // As long as start continues to be a size we have more to read. Keep building payloads until we are done
         do
         {
-            if (end != nullptr)
-                ++end;
+            // We take one away from the payload size since we read the packet id out immediately
+            uint8_t payloadSize = (static_cast<uint8_t>(start[0]) - 1);
+            uint8_t packetId = static_cast<uint8_t>(start[1]);
+
+            // Create a payload that will be routed to the relevant state handler
+            SPacketPayload payload;
+            payload.m_packetId = packetId;
+            payload.m_size = payloadSize;
+            payload.m_payload = new char[payloadSize];
+
+            // We trim the first two bytes (size & packetId) since we've already read that infomration
+            memcpy(payload.m_payload, start + 2, payloadSize);
+
+            payloads.emplace_back(std::move(payload));
+
+            // Shift the start to the beginning of the next packet
+            start = &start[payloadSize + 2];
             
-            uint8_t payloadSize = static_cast<uint8_t>(recvBuffer[0]);
-            uint8_t packetId = static_cast<uint8_t>(recvBuffer[1]);
-        
+#if 0
             if (m_clientState == EClientState::eCS_Handshake)
             {
                 SHandShake handShake;
@@ -81,7 +111,8 @@ bool CGameClient::RecvPackets()
                         break;
                 }
             }
-        } while (*end != 0);
+#endif
+        } while (*start != 0);
         
         return true;
     }
@@ -100,7 +131,7 @@ bool CGameClient::RecvPackets()
     }
 
     // If we make it here something went wrong
-    printf("recv failed with error: %d\n", WSAGetLastError());
+    spdlog::error("Recv failed with error {}", error);
     
     closesocket(m_clientSocket);
     m_socketState = ESocketState::eSS_CLOSED;

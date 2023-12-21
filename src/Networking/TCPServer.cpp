@@ -1,6 +1,9 @@
 ﻿#include "TCPServer.h"
 
 #include <string>
+#include <iostream>
+#include <spdlog/spdlog.h>
+
 #pragma comment(lib, "Ws2_32.lib")
 
 CTCPServer::CTCPServer(const uint16_t port)
@@ -42,7 +45,7 @@ bool CTCPServer::Listen()
     {
         m_listenSocketState = ESocketState::eSS_INVALID_ADDR;
 
-        // TODO logging
+        spdlog::error("Error retrieving address info while creating listen socket");
         WSACleanup();
         return false;
     }
@@ -52,7 +55,7 @@ bool CTCPServer::Listen()
     {
         m_listenSocketState = ESocketState::eSS_INVALID;
 
-        // TODO logging
+        spdlog::error("Error retrieving address info while creating listen socket");
         WSACleanup();
         return false;
     }
@@ -61,6 +64,8 @@ bool CTCPServer::Listen()
     if(ioctlsocket(m_listenSocket, FIONBIO, &iMode) != 0)
     {
         closesocket(m_listenSocket);
+        
+        spdlog::error("Failed to change listen socket mode to non-blocking with error code {}", WSAGetLastError());
         WSACleanup();
         return false;
     }
@@ -70,7 +75,7 @@ bool CTCPServer::Listen()
     {
         m_listenSocketState = ESocketState::eSS_BIND_ERROR;
         
-        // TODO logging
+        spdlog::error("Failed to bind to port {} with error code {}", m_port, WSAGetLastError());
         closesocket(m_listenSocket);
         WSACleanup();
         return false;
@@ -83,11 +88,13 @@ bool CTCPServer::Listen()
     {
         m_listenSocketState = ESocketState::eSS_LISTEN_ERROR;
         
-        // TODO logging
+        spdlog::error("Failed to listen on port {} with error code {}", m_port, WSAGetLastError());
         closesocket(m_listenSocket);
         WSACleanup();
         return false;
     }
+
+    spdlog::info("Sucessfully started listening on {}", m_port);
 
     m_listenSocketState = ESocketState::eSS_LISTEN;
 #endif
@@ -97,17 +104,22 @@ bool CTCPServer::Listen()
 
 IClientPtr CTCPServer::AcceptConnection() const
 {
-    SOCKET socket = accept(m_listenSocket, nullptr, nullptr);
+    struct sockaddr_in sa = { 0 }; /* for TCP/IP */
+    socklen_t socklen = sizeof sa;
+
+    SOCKET socket = accept(m_listenSocket, (struct sockaddr*)&sa, &socklen);
     if(socket == INVALID_SOCKET)
     {
         if(WSAGetLastError() == WSAEWOULDBLOCK)
             return nullptr;
 
-        printf("Accept failed with error: %d\n", WSAGetLastError());
+        spdlog::error("Failed to accept new client connect with error {}", WSAGetLastError());
 
         closesocket(m_listenSocket);
         return nullptr;
     }
+
+    spdlog::info("Accepting connection from {}", inet_ntoa(sa.sin_addr));
     
     return std::make_shared<CGameClient>(socket);
 }
