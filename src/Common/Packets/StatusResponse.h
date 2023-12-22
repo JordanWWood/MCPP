@@ -12,12 +12,26 @@ struct SStatusResponse : IPacket
     {
         SPacketPayload payload;
 
-        std::string string =
-            R"({"version":{"name":"1.20.4","protocol":765},"players":{"max":10000,"online":0,"sample":[]},"description":{"text":"MCPP Server"},"favicon":"","enforceSecureChat":true,"previewsChat":true})";
+        std::string string =R"(
+            {
+                "version": {
+                    "name": "1.20.4",
+                    "protocol": 765
+                },
+                "players": {
+                    "max": 10000,
+                    "online": 0
+                },
+                "description": {
+                    "text": "MCPP Server"
+                },
+                "enforceSecureChat": true,
+                "previewsChat": true
+            })";
         
         payload.m_payload = new char[string.size() + 3];
         
-        payload.m_payload[0] = static_cast<char>(188);
+        *payload.m_payload = static_cast<char>(string.size() + 3);
         payload.m_payload[1] = 0;
         payload.m_payload[2] = static_cast<uint8_t>(string.size());
         memcpy(&payload.m_payload[3], string.c_str(), string.size());

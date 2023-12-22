@@ -15,10 +15,10 @@ struct SPacketPayload
         other.m_payload = nullptr;
     }
     
-    uint8_t m_packetId{ 0 };
+    uint32_t m_packetId{ 0 };
     
     char* m_payload{ nullptr };
-    uint8_t m_size{ 0 };
+    uint32_t m_size{ 0 };
 };
 
 inline SPacketPayload::~SPacketPayload()

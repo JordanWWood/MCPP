@@ -24,6 +24,7 @@ public:
 
     bool IsDead() const { return m_pConnection->IsSocketClosed(); }
     std::string GetUsername() const { return m_username; }
+    EClientState GetCurrentState() const { return m_state; }
 private:
     bool HandleHandshake(SPacketPayload&& payload);
     bool HandleLogin(SPacketPayload&& payload);

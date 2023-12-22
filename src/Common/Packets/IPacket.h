@@ -23,50 +23,77 @@ public:
     virtual ~IPacket() = default;
     virtual void Deserialize(char* start) = 0;
     virtual SPacketPayload Serialize() = 0;
-    
-protected:
-    static uint16_t DeserializeShort(char* start, uint32_t& offset)
-    {
-        offset += 2;
 
-        const uint16_t reverseInt = *reinterpret_cast<uint16_t*>(start);
-        return (reverseInt << 8) | ((reverseInt >> 8) & 0x00ff);
-    }
-    
-    static uint32_t DeserializeVarInt(char* start, uint32_t& end)
-    {
-        uint32_t value = 0;
-        int position = 0;
-        int bytes = 0;
-        
-        while (true) {
-            uint8_t byte = static_cast<uint8_t>(*start);
-            ++start;
+    ////////////////////////////////////////////////
+    // Serialization/Deserialization
+    static uint16_t DeserializeShort(char* start, uint32_t& offset);
 
-            ++bytes;
-            value |= (byte & SEGMENT_BITS) << position;
+    static uint32_t DeserializeVarInt(char* start, uint32_t& offset);
+    static void SerializeVarInt(char* start, uint32_t value, uint32_t& offset);
 
-            if((byte & CONTINUE_BIT) == 0) break;
-
-            position += 7;
-
-            if (position >= 32) return 0;
-        }
-        end = bytes;
-        return value;
-    }
-
-    static std::string DeserializeString(char* start, uint32_t maxSize, uint32_t& offset)
-    {
-        if(maxSize >= MAX_STRING_LENGTH)
-            return "";
-        
-        uint32_t length = static_cast<uint32_t>(*start);
-        offset = offset + length + 1;
-
-        // Plus one since we want to trim the string length
-        std::string string(start + 1, length);
-        
-        return string;
-    }
+    static std::string DeserializeString(char* start, uint32_t maxSize, uint32_t& offset);
 };
+
+inline uint16_t IPacket::DeserializeShort(char* start, uint32_t& offset)
+{
+    offset += 2;
+
+    const uint16_t reverseInt = *reinterpret_cast<uint16_t*>(start);
+    return (reverseInt << 8) | ((reverseInt >> 8) & 0x00ff);
+}
+
+inline uint32_t IPacket::DeserializeVarInt(char* start, uint32_t& offset)
+{
+    uint32_t value = 0;
+    int position = 0;
+
+    while (true) {
+        uint8_t byte = static_cast<uint8_t>(*start);
+        ++start;
+        ++offset;
+            
+        value |= (byte & SEGMENT_BITS) << position;
+
+        if((byte & CONTINUE_BIT) == 0) break;
+
+        position += 7;
+
+        if (position >= 32) return 0;
+    }
+    
+    return value;
+}
+
+inline void IPacket::SerializeVarInt(char* start, uint32_t value, uint32_t& offset)
+{
+    const uint32_t startOffset = offset;
+    while (true) {
+        const uint32_t position = offset - startOffset;
+            
+        if ((value & ~SEGMENT_BITS) == 0) {
+            start[position] = static_cast<char>(value);
+            return;
+        }
+
+        start[position] = static_cast<char>((value & SEGMENT_BITS) | CONTINUE_BIT);
+            
+        value = value >> 7;
+        offset++;
+    }
+}
+
+inline std::string IPacket::DeserializeString(char* start, uint32_t maxSize, uint32_t& offset)
+{
+    if(maxSize >= MAX_STRING_LENGTH)
+        return "";
+
+    uint32_t startOffset = offset;
+    const uint32_t length = DeserializeVarInt(start, offset);
+    uint32_t endOffset = offset - startOffset;
+    offset = offset + length;
+
+    // Adding the offset since we want to trim the size of the string
+    std::string string(start + endOffset, length);
+        
+    return string;
+}

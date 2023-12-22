@@ -1,11 +1,10 @@
 ﻿#include "MCServer.h"
 
 #include <chrono>
-#include <iostream>
-
 #include <spdlog/spdlog.h>
 
 #include "MCPlayer.h"
+#include "Common/Packets/IPacket.h"
 
 #define MAIN_THREAD_UPDATE_RATE 20
 #define NETWORK_THREAD_UPDATE_RATE 120
@@ -74,9 +73,13 @@ void CMCServer::NetworkRun()
 
                 if (player.IsDead())
                 {
-                    spdlog::info("Client has disconnected. Username[{}]", player.GetUsername());
+                    if (player.GetCurrentState() >= EClientState::eCS_Login)
+                        spdlog::info("Client has disconnected. Username[{}]", player.GetUsername());
+                    else
+                        spdlog::info("Server list ping disconnected");
+                    
                     it = m_players.erase(it); // This client is no longer connected. Remove it
-                        continue;
+                    continue;
                 }
 
                 ++it;

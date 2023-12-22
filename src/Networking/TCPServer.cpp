@@ -120,5 +120,5 @@ IConnectionPtr CTCPServer::AcceptConnection() const
 
     spdlog::info("Accepting connection from {}", inet_ntoa(sa.sin_addr));
     
-    return std::make_shared<CClientConnection>(socket);
+    return std::make_shared<CClientConnection>(socket, inet_ntoa(sa.sin_addr));
 }

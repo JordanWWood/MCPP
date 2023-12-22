@@ -6,7 +6,7 @@ class LoginStart : public IPacket
 public:
     void Deserialize(char* start) override
     {
-        uint32_t offset;
+        uint32_t offset = 0;
         m_username = DeserializeString(start, 16, offset);
         //DeserializeLong(start + offset, offset);
         //DeserializeLong(start + offset, offset);

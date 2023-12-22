@@ -13,6 +13,7 @@
 
 #include "Common/IPacketHandler.h"
 #include "Common/PacketPayload.h"
+#include "Common/Packets/IPacket.h"
 
 #define DEFAULT_BUFLEN 512
 
@@ -39,27 +40,34 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
         // As long as start continues to be a size we have more to read. Keep building payloads until we are done
         do
         {
+            uint32_t offset = 0;
+            
             // We take one away from the payload size since we read the packet id out immediately
-            uint8_t payloadSize = (static_cast<uint8_t>(start[0]) - 1);
-            uint8_t packetId = static_cast<uint8_t>(start[1]);
+            const uint32_t payloadSize = IPacket::DeserializeVarInt(start, offset);
+            const uint32_t sizeOffset = offset;
 
+            const uint32_t packetId = IPacket::DeserializeVarInt(start + offset, offset);
+            const uint32_t packetIdSize = offset - sizeOffset;
+
+            const uint32_t finalPayloadSize = payloadSize - packetIdSize;
+            
             // Create a payload that will be routed to the relevant state handler
             SPacketPayload payload;
             payload.m_packetId = packetId;
-            payload.m_size = payloadSize;
+            payload.m_size = finalPayloadSize;
 
             // If payload size is zero then this is a packet that has no payload. E.G. Status Request
             // No point allocating a payload if that is the case
-            if (payloadSize > 0)
+            if (finalPayloadSize > 0)
             {
-                payload.m_payload = new char[payloadSize];
+                payload.m_payload = new char[finalPayloadSize];
 
                 // We trim the first two bytes (size & packetId) since we've already read that infomration
-                memcpy(payload.m_payload, start + 2, payloadSize);
+                memcpy(payload.m_payload, start + offset, finalPayloadSize);
             }
 
             // Shift the start to the beginning of the next packet
-            start = &start[payloadSize + 2];
+            start = &start[finalPayloadSize + offset];
 
             const bool result = pHandler->ProcessPacket(std::move(payload));
             if (!result)
@@ -75,7 +83,7 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
 
     if (iResult == 0)
     {
-        spdlog::info("Client connection disconnected");
+        spdlog::debug("Client {} disconnected", GetRemoteAddress());
         closesocket(m_clientSocket);
         m_socketState = ESocketState::eSS_CLOSED;
         return true;
