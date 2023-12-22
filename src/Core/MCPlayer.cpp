@@ -46,7 +46,7 @@ bool CMCPlayer::ProcessPacket(SPacketPayload&& payload)
 bool CMCPlayer::HandleHandshake(SPacketPayload&& payload)
 {
     SHandshake handshake;
-    handshake.Deserialize(payload.m_payload);
+    handshake.Deserialize(payload.GetDeserializeStartPtr());
 
     if (handshake.m_protocolVersion != PROTOCOL_VERSION)
         return false;
@@ -68,7 +68,7 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
     if(payload.m_packetId == 0)
     {
         LoginStart login_start;
-        login_start.Deserialize(payload.m_payload);
+        login_start.Deserialize(payload.GetDeserializeStartPtr());
 
         m_username = login_start.m_username;
         
@@ -80,30 +80,16 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
 
 bool CMCPlayer::HandleStatus(SPacketPayload&& payload)
 {
-    // Status request. Packet should have no payload
     if(payload.m_packetId == 0)
     {
-        // If we do have a payload this is not the packet we think it is
-        if(payload.m_payload)
-            return false;
-
         SStatusResponse response;
         m_pConnection->SendPacket(response.Serialize());
     }
 
     if(payload.m_packetId == 1)
     {
-        SPacketPayload newPayload;
-        newPayload.m_size = payload.m_size + 1;
-        newPayload.m_payload = new char[newPayload.m_size + 1];
-
-        uint32_t offset = 0;
-        IPacket::SerializeVarInt(newPayload.m_payload, newPayload.m_size, offset);
-        IPacket::SerializeVarInt(newPayload.m_payload + offset, 1, offset);
-        
-        memcpy(&newPayload.m_payload[offset], payload.m_payload, payload.m_size);
-        m_pConnection->SendPacket(std::move(newPayload));
+        payload.m_size = payload.m_size + 2;
+        m_pConnection->SendPacket(std::move(payload));
     }
-    
     return true;
 }

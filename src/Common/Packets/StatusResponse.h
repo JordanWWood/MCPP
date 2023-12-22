@@ -5,10 +5,10 @@
 
 struct SStatusResponse : IPacket
 {
-    // We'll never want to serialize this packet. Only used for the server list
+    // We'll never want to deserialize this packet. Only used for the server list
     virtual void Deserialize(char* start) override {}
     
-    virtual SPacketPayload Serialize()
+    virtual SPacketPayload Serialize() override
     {
         SPacketPayload payload;
 

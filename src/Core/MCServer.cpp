@@ -74,9 +74,9 @@ void CMCServer::NetworkRun()
                 if (player.IsDead())
                 {
                     if (player.GetCurrentState() >= EClientState::eCS_Login)
-                        spdlog::info("Client has disconnected. Username[{}]", player.GetUsername());
+                        spdlog::info("Client has disconnected. Username[{}] State[{}]", player.GetUsername(), static_cast<uint32_t>(player.GetCurrentState()));
                     else
-                        spdlog::info("Server list ping disconnected");
+                        spdlog::info("Server list ping disconnected. State[{}]", static_cast<uint32_t>(player.GetCurrentState()));
                     
                     it = m_players.erase(it); // This client is no longer connected. Remove it
                     continue;

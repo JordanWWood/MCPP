@@ -1,8 +1,5 @@
-﻿#include "ClientConnection.h"
+#include "ClientConnection.h"
 
-#include <cstdio>
-#include <memory>
-#include <string>
 #include <vector>
 
 #include <spdlog/spdlog.h>
@@ -55,23 +52,19 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
             SPacketPayload payload;
             payload.m_packetId = packetId;
             payload.m_size = finalPayloadSize;
+            payload.m_startOffset = offset;
 
-            // If payload size is zero then this is a packet that has no payload. E.G. Status Request
-            // No point allocating a payload if that is the case
-            if (finalPayloadSize > 0)
-            {
-                payload.m_payload = new char[finalPayloadSize];
+            payload.m_payload = new char[payloadSize + sizeOffset];
+            memmove(payload.m_payload, start, payloadSize + sizeOffset);
 
-                // We trim the first two bytes (size & packetId) since we've already read that infomration
-                memcpy(payload.m_payload, start + offset, finalPayloadSize);
-            }
-
-            // Shift the start to the beginning of the next packet
-            start = &start[finalPayloadSize + offset];
+            // Shift the start to the beginning of what would be the next packet
+            start = start + (finalPayloadSize + offset);
 
             const bool result = pHandler->ProcessPacket(std::move(payload));
             if (!result)
             {
+                spdlog::warn("Error processing packet. Disconnecting connection. PacketId[{}] Address[{}]", packetId, GetRemoteAddress().c_str());
+                
                 closesocket(m_clientSocket);
                 m_socketState = ESocketState::eSS_CLOSED;
                 m_clientSocket = INVALID_SOCKET;
@@ -83,7 +76,7 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
 
     if (iResult == 0)
     {
-        spdlog::debug("Client {} disconnected", GetRemoteAddress());
+        spdlog::debug("Client disconnected. Address[{}]", GetRemoteAddress());
         closesocket(m_clientSocket);
         m_socketState = ESocketState::eSS_CLOSED;
         return true;
@@ -97,7 +90,7 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
     }
 
     // If we make it here something went wrong
-    spdlog::error("Recv failed with error {}", error);
+    spdlog::error("Failed to receive packets from client. Error[{}] Address[{}]", error, GetRemoteAddress());
     
     closesocket(m_clientSocket);
     m_socketState = ESocketState::eSS_CLOSED;
@@ -107,13 +100,10 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
 
 bool CClientConnection::SendPacket(SPacketPayload&& payload)
 {
-    char* sendBuffer = new char[payload.m_size];
-    memcpy(sendBuffer, payload.m_payload, payload.m_size);
-
-    int iResult = send(m_clientSocket, sendBuffer, payload.m_size, 0);
+    int iResult = send(m_clientSocket, payload.m_payload, payload.m_size, 0);
     if (iResult == SOCKET_ERROR)
     {
-        spdlog::error("Failed to send payload to client. Error[{}]", WSAGetLastError());
+        spdlog::error("Failed to send payload to client. Error[{}] Address[{}]", WSAGetLastError(), GetRemoteAddress());
 
         m_socketState = ESocketState::eSS_CLOSED;
         closesocket(m_clientSocket);

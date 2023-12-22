@@ -14,11 +14,14 @@ struct SPacketPayload
 
         other.m_payload = nullptr;
     }
+
+    char* GetDeserializeStartPtr() { return m_payload + m_startOffset; }
+
+    char* m_payload{ nullptr };
     
     uint32_t m_packetId{ 0 };
-    
-    char* m_payload{ nullptr };
     uint32_t m_size{ 0 };
+    uint32_t m_startOffset{ 0 };
 };
 
 inline SPacketPayload::~SPacketPayload()
