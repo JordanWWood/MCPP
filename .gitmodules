@@ -1,0 +1,6 @@
+[submodule "vendor/mine"]
+	path = vendor/mine
+	url = https://github.com/abumq/mine.git
+[submodule "vendor/spdlog"]
+	path = vendor/spdlog
+	url = https://github.com/gabime/spdlog.git

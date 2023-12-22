@@ -18,3 +18,5 @@ bin64/
 *.log
 
 *.user
+
+bin/Win64/Debug/

@@ -1,13 +1,22 @@
+
+
 workspace "MCPP"
     configurations { "Debug", "Release" }
     platforms { "Win32", "Win64", "Linux" }
+
+project "mine"
+	kind "StaticLib"
+	targetdir "bin64/%{cfg.buildcfg}"
+	language "C++"
+	files { "vendor/mine/src/**.cc", "vendor/mine/src/**.h" }
 
 project "MCPP"
     kind "ConsoleApp"
     language "C++"
     targetdir "bin64/%{cfg.buildcfg}"
+	links { "mine" }
     
-    includedirs { "src", "vendor" }
+    includedirs { "src", "vendor/spdlog/include", "vendor/mine/src" }
 
     files { "src/**.h", "src/**.cpp" }
 
@@ -18,11 +27,6 @@ project "MCPP"
     filter "configurations:Release"
         defines { "NDEBUG", "RELEASE" }
         optimize "On"
-
-    filter { "platforms:Win32" }
-        system "windows"
-        architecture "x86"
-        toolset "msc"
 
     filter { "platforms:Win64" }
         system "windows"
