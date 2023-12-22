@@ -12,6 +12,7 @@ struct SStatusResponse : IPacket
     {
         SPacketPayload payload;
 
+        // TODO this needs to be created on the go
         std::string string =R"(
             {
                 "version": {
@@ -29,14 +30,19 @@ struct SStatusResponse : IPacket
                 "previewsChat": true
             })";
         
-        payload.m_payload = new char[string.size() + 3];
+        const uint32_t stringLengthSize = VarIntSize(string.size());
+        const uint32_t packetIdSize = VarIntSize(0);
+        const uint32_t payloadSize = VarIntSize(packetIdSize + stringLengthSize + static_cast<uint32_t>(string.size()));
         
-        *payload.m_payload = static_cast<char>(string.size() + 3);
-        payload.m_payload[1] = 0;
-        payload.m_payload[2] = static_cast<uint8_t>(string.size());
-        memcpy(&payload.m_payload[3], string.c_str(), string.size());
+        payload.m_payload = new char[payloadSize + packetIdSize + stringLengthSize + string.size()];
 
-        payload.m_size = string.size() + 3;
+        uint32_t offset = 0;
+        SerializeVarInt(payload.m_payload, packetIdSize + stringLengthSize + static_cast<uint32_t>(string.size()), offset);
+        SerializeVarInt(payload.m_payload + offset, 0, offset);
+        SerializeVarInt(payload.m_payload + offset, string.size(), offset);
+        memcpy(&payload.m_payload[offset], string.c_str(), string.size());
+
+        payload.m_size = string.size() + offset;
         
         return payload;
     }

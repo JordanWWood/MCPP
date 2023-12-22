@@ -97,10 +97,11 @@ bool CMCPlayer::HandleStatus(SPacketPayload&& payload)
         newPayload.m_size = payload.m_size + 1;
         newPayload.m_payload = new char[newPayload.m_size + 1];
 
-        newPayload.m_payload[0] = newPayload.m_size;
-        newPayload.m_payload[1] = payload.m_size;
-
-        memcpy(&newPayload.m_payload[2], payload.m_payload, payload.m_size);
+        uint32_t offset = 0;
+        IPacket::SerializeVarInt(newPayload.m_payload, newPayload.m_size, offset);
+        IPacket::SerializeVarInt(newPayload.m_payload + offset, 1, offset);
+        
+        memcpy(&newPayload.m_payload[offset], payload.m_payload, payload.m_size);
         m_pConnection->SendPacket(std::move(newPayload));
     }
     
