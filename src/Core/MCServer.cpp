@@ -30,6 +30,8 @@ bool CMCServer::Init()
     spdlog::info("Initialising MC Server");
     m_networkThread = std::thread(NetworkThread, this);
 
+    // TODO private key
+    
     return true;
 }
 

@@ -1,22 +1,39 @@
-
-
 workspace "MCPP"
     configurations { "Debug", "Release" }
     platforms { "Win32", "Win64", "Linux" }
+
+project "zlib"
+	kind "StaticLib"
+	targetdir "bin64/%{cfg.buildcfg}"
+	language "C"
+	
+	files {	"vendor/zlib/*.c", "vendor/zlib/*.h" }
 
 project "mine"
 	kind "StaticLib"
 	targetdir "bin64/%{cfg.buildcfg}"
 	language "C++"
-	files { "vendor/mine/src/**.cc", "vendor/mine/src/**.h" }
+	links {"zlib"}
+	includedirs { "vendor/zlib" }
+	
+	files { "vendor/mine/package/**.h", "vendor/mine/package/**.cc" }
+	
+project "spdlog"
+	kind "StaticLib"
+	targetdir "bin64/%{cfg.buildcfg}"
+	language "C++"
+	includedirs { "vendor/spdlog/include" }
+	defines { "SPDLOG_COMPILED_LIB" }
+	
+	files { "vendor/spdlog/src/**.cpp", "vendor/spdlog/include/**.h" }
 
 project "MCPP"
     kind "ConsoleApp"
     language "C++"
     targetdir "bin64/%{cfg.buildcfg}"
-	links { "mine" }
+	links { "mine", "spdlog" }
     
-    includedirs { "src", "vendor/spdlog/include", "vendor/mine/src" }
+    includedirs { "src", "vendor/spdlog/include", "vendor/mine/package" }
 
     files { "src/**.h", "src/**.cpp" }
 

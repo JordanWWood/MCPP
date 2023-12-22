@@ -72,6 +72,9 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
 
         m_username = login_start.m_username;
         
+        // Send over our public key
+        // TODO mojang auth
+        
         return true;
     }
 
