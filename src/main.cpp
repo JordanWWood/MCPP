@@ -1,4 +1,5 @@
 
+#include "pch.h"
 #include "Core/MCServer.h"
 
 #include <spdlog/sinks/stdout_color_sinks.h>

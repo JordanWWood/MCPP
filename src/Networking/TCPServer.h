@@ -3,7 +3,6 @@
 #include <memory>
 
 #include "SocketUtils.h"
-#include "stdafx.h"
 
 // TODO tidy up includes
 #ifdef _WIN32

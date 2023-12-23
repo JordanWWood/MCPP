@@ -1,4 +1,5 @@
-﻿#include "MCPlayer.h"
+﻿#include "pch.h"
+#include "MCPlayer.h"
 
 #include <spdlog/spdlog.h>
 

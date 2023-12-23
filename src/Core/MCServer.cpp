@@ -1,4 +1,5 @@
-﻿#include "MCServer.h"
+﻿#include "pch.h"
+#include "MCServer.h"
 
 #include "MCPlayer.h"
 

@@ -24,6 +24,9 @@ project "MCPP"
     targetdir "bin64/%{cfg.buildcfg}"
 	links { "spdlog" }
     
+	pchheader "pch.h"
+	pchsource "src/pch.cpp"
+	
     includedirs { "src", "vendor/spdlog/include", "vendor/json/include", os.getenv("OPENSSL_INSTALL_DIR") .. "/include" }
 
     files { "src/**.h", "src/**.cpp" }

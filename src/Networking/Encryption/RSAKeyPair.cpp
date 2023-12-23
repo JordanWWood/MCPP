@@ -1,4 +1,5 @@
-﻿#include "RSAKeyPair.h"
+﻿#include "pch.h"
+#include "RSAKeyPair.h"
 
 #include <string>
 #include <openssl/x509.h>
