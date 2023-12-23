@@ -8,15 +8,6 @@ project "zlib"
 	language "C"
 	
 	files {	"vendor/zlib/*.c", "vendor/zlib/*.h" }
-
-project "mine"
-	kind "StaticLib"
-	targetdir "bin64/%{cfg.buildcfg}"
-	language "C++"
-	links {"zlib"}
-	includedirs { "vendor/zlib" }
-	
-	files { "vendor/mine/package/**.h", "vendor/mine/package/**.cc" }
 	
 project "spdlog"
 	kind "StaticLib"
@@ -31,9 +22,9 @@ project "MCPP"
     kind "ConsoleApp"
     language "C++"
     targetdir "bin64/%{cfg.buildcfg}"
-	links { "mine", "spdlog" }
+	links { "spdlog", os.getenv("OPENSSL_INSTALL_DIR") .. "/lib/libcrypto_static.lib" }
     
-    includedirs { "src", "vendor/spdlog/include", "vendor/mine/package" }
+    includedirs { "src", "vendor/spdlog/include", os.getenv("OPENSSL_INSTALL_DIR") .. "/include" }
 
     files { "src/**.h", "src/**.cpp" }
 

@@ -6,6 +6,7 @@
 #include <mutex>
 #include <thread>
 #include <vector>
+#include <openssl/types.h>
 
 #include "Networking/TCPServer.h"
 #include "MCPlayer.h"
@@ -26,4 +27,6 @@ private:
     std::atomic<bool> m_quit;
     std::thread m_networkThread;
     std::mutex m_networkLock;
+
+    RSA* m_rsaKey;
 };
