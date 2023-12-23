@@ -39,4 +39,6 @@ private:
     IConnectionPtr m_pConnection{ nullptr };
     EClientState m_state { static_cast<EClientState>(0) };
     std::shared_ptr<IRSAKeyPair> m_pServerKey { nullptr };
+
+    std::string m_verifyToken;
 };

@@ -17,6 +17,10 @@ int main(int argc, char** argv)
     spdlog::register_logger(logger);
     spdlog::set_default_logger(logger);
 
+#ifdef _DEBUG
+    spdlog::set_level(spdlog::level::debug);
+#endif
+
     spdlog::set_pattern("[%H:%M:%S %z][%n][%t][%l] %v");
 
     spdlog::info("Logger initialised");

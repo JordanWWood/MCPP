@@ -38,28 +38,18 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
         do
         {
             uint32_t offset = 0;
-            
-            // We take one away from the payload size since we read the packet id out immediately
-            const uint32_t payloadSize = IPacket::DeserializeVarInt(start, offset);
-            const uint32_t sizeOffset = offset;
-
-            const uint32_t packetId = IPacket::DeserializeVarInt(start + offset, offset);
-            const uint32_t packetIdSize = offset - sizeOffset;
-
-            const uint32_t finalPayloadSize = payloadSize - packetIdSize;
-            
-            // Create a payload that will be routed to the relevant state handler
             SPacketPayload payload;
-            payload.m_packetId = packetId;
-            payload.m_size = finalPayloadSize;
-            payload.m_startOffset = offset;
-
-            payload.m_payload = new char[payloadSize + sizeOffset];
-            memmove(payload.m_payload, start, payloadSize + sizeOffset);
-
+            if (!m_encryptionEnabled)
+                payload = ReadUnecryptedPacket(start, offset);
+            else
+            {
+                //TODO
+            }
+            
             // Shift the start to the beginning of what would be the next packet
-            start = start + (finalPayloadSize + offset);
+            start = start + (payload.m_size + offset);
 
+            uint32_t packetId = payload.m_packetId;
             const bool result = pHandler->ProcessPacket(std::move(payload));
             if (!result)
             {
@@ -100,7 +90,14 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
 
 bool CClientConnection::SendPacket(SPacketPayload&& payload)
 {
-    int iResult = send(m_clientSocket, payload.m_payload, payload.m_size, 0);
+    int iResult = 0;
+    if(!m_encryptionEnabled)
+        iResult = send(m_clientSocket, payload.m_payload, payload.m_size, 0);
+    else
+    {
+        // TODO
+    }
+    
     if (iResult == SOCKET_ERROR)
     {
         spdlog::error("Failed to send payload to client. Error[{}] Address[{}]", WSAGetLastError(), GetRemoteAddress());
@@ -111,4 +108,34 @@ bool CClientConnection::SendPacket(SPacketPayload&& payload)
     }
     
     return false;
+}
+
+SPacketPayload CClientConnection::ReadUnecryptedPacket(char* start, uint32_t& offset)
+{
+    // We take one away from the payload size since we read the packet id out immediately
+    const uint32_t payloadSize = IPacket::DeserializeVarInt(start, offset);
+    const uint32_t sizeOffset = offset;
+            
+    const uint32_t packetId = IPacket::DeserializeVarInt(start + offset, offset);
+    const uint32_t packetIdSize = offset - sizeOffset;
+
+    const uint32_t finalPayloadSize = payloadSize - packetIdSize;
+            
+    // Create a payload that will be routed to the relevant state handler
+    SPacketPayload payload;
+    payload.m_packetId = packetId;
+    payload.m_size = finalPayloadSize;
+    payload.m_startOffset = offset;
+
+    payload.m_payload = new char[payloadSize + sizeOffset];
+    memmove(payload.m_payload, start, payloadSize + sizeOffset);
+}
+
+char* CClientConnection::DecryptPacket(char* start)
+{
+    
+}
+
+char* CClientConnection::EncryptPacket(char* start)
+{
 }

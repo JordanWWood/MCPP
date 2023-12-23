@@ -9,6 +9,7 @@
 #include "Common/PacketPayload.h"
 #include "Common/Encryption/IRSAKeyPair.h"
 #include "Common/Packets/EncryptionRequest.h"
+#include "Common/Packets/EncryptionResponse.h"
 #include "Common/Packets/LoginStart.h"
 #include "Common/Packets/StatusResponse.h"
 
@@ -84,6 +85,8 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
         
         // Send over our public key
         SendEncryptionRequest();
+
+        spdlog::debug("Sent encryption request. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
         
         return true;
     }
@@ -91,6 +94,22 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
     if (payload.m_packetId == 1)
     {
         spdlog::debug("Received encryption response. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
+
+        SEncryptionResponse response;
+        response.m_pServerKey = m_pServerKey;
+
+        response.Deserialize(payload.GetDeserializeStartPtr());
+        spdlog::debug("Deserialized encryption response. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
+        
+        if (response.m_verifyTokenValue != m_verifyToken)
+            return false;
+        
+        m_pConnection->EnableEncryption();
+        m_pConnection->SetAESKey(response.m_sharedSecret);
+
+        spdlog::debug("Enabled encryption. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
+        
+        return true;
     }
 
     return true;
@@ -126,13 +145,11 @@ bool CMCPlayer::SendEncryptionRequest()
     std::mt19937 generator(random_device());
     std::uniform_int_distribution<> distribution(0, CHARACTERS.size() - 1);
 
-    std::string random_string;
-
     for (std::size_t i = 0; i < 64; ++i)
-        random_string += CHARACTERS[distribution(generator)];
+        m_verifyToken += CHARACTERS[distribution(generator)];
 
-    request.m_verifyTokenLength = random_string.size();
-    request.m_verifyToken = std::move(random_string);
+    request.m_verifyTokenLength = m_verifyToken.size();
+    request.m_verifyToken = m_verifyToken;
     
     m_pConnection->SendPacket(request.Serialize());
 

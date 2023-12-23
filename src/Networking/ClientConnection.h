@@ -18,9 +18,19 @@ public:
     virtual bool IsSocketClosed() const final { return m_socketState == ESocketState::eSS_CLOSED; }
     virtual std::string GetRemoteAddress() const override { return m_socketAddress; }
     
+    virtual void SetAESKey(std::string key) override { m_aesKey = key; }
+    virtual void EnableEncryption() override { m_encryptionEnabled = true; }
+    
 private:
+    SPacketPayload ReadUnecryptedPacket(char* start, uint32_t& offset);
+    char* DecryptPacket(char* start);
+    char* EncryptPacket(char* start);
+    
     uint64_t m_clientSocket;
 
     std::string m_socketAddress;
     ESocketState m_socketState{ ESocketState::eSS_CONNECTED };
+
+    std::string m_aesKey;
+    bool m_encryptionEnabled { false };
 };
