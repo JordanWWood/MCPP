@@ -22,9 +22,9 @@ project "MCPP"
     kind "ConsoleApp"
     language "C++"
     targetdir "bin64/%{cfg.buildcfg}"
-	links { "spdlog", os.getenv("OPENSSL_INSTALL_DIR") .. "/lib/libcrypto_static.lib" }
+	links { "spdlog" }
     
-    includedirs { "src", "vendor/spdlog/include", os.getenv("OPENSSL_INSTALL_DIR") .. "/include" }
+    includedirs { "src", "vendor/spdlog/include", "vendor/json/include", os.getenv("OPENSSL_INSTALL_DIR") .. "/include" }
 
     files { "src/**.h", "src/**.cpp" }
 
@@ -40,6 +40,7 @@ project "MCPP"
         system "windows"
         architecture "x64"
         toolset "msc"
+        links { os.getenv("OPENSSL_INSTALL_DIR") .. "/lib/libcrypto_static.lib" }
 
     filter { "platforms:Linux" }
         system "linux"

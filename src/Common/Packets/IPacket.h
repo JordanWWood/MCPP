@@ -17,9 +17,8 @@ enum class EClientState : uint8_t
     eCS_Play
 };
 
-class IPacket
+struct IPacket
 {
-public:
     virtual ~IPacket() = default;
     virtual void Deserialize(char* start) = 0;
     virtual SPacketPayload Serialize() = 0;

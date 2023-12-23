@@ -38,26 +38,27 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
         do
         {
             uint32_t offset = 0;
-            SPacketPayload payload;
             if (!m_encryptionEnabled)
-                payload = ReadUnecryptedPacket(start, offset);
+            {
+                SPacketPayload payload = ReadUnecryptedPacket(start, offset);
+
+                // Shift the start to the beginning of what would be the next packet
+                start = start + (payload.m_size + offset);
+
+                uint32_t packetId = payload.m_packetId;
+                const bool result = pHandler->ProcessPacket(std::move(payload));
+                if (!result)
+                {
+                    spdlog::warn("Error processing packet. Disconnecting connection. PacketId[{}] Address[{}]", packetId, GetRemoteAddress().c_str());
+                
+                    closesocket(m_clientSocket);
+                    m_socketState = ESocketState::eSS_CLOSED;
+                    m_clientSocket = INVALID_SOCKET;
+                }
+            }
             else
             {
                 //TODO
-            }
-            
-            // Shift the start to the beginning of what would be the next packet
-            start = start + (payload.m_size + offset);
-
-            uint32_t packetId = payload.m_packetId;
-            const bool result = pHandler->ProcessPacket(std::move(payload));
-            if (!result)
-            {
-                spdlog::warn("Error processing packet. Disconnecting connection. PacketId[{}] Address[{}]", packetId, GetRemoteAddress().c_str());
-                
-                closesocket(m_clientSocket);
-                m_socketState = ESocketState::eSS_CLOSED;
-                m_clientSocket = INVALID_SOCKET;
             }
         } while (*start != 0);
         
@@ -129,13 +130,16 @@ SPacketPayload CClientConnection::ReadUnecryptedPacket(char* start, uint32_t& of
 
     payload.m_payload = new char[payloadSize + sizeOffset];
     memmove(payload.m_payload, start, payloadSize + sizeOffset);
+
+    return payload;
 }
 
 char* CClientConnection::DecryptPacket(char* start)
 {
-    
+    return nullptr;
 }
 
 char* CClientConnection::EncryptPacket(char* start)
 {
+    return nullptr;
 }

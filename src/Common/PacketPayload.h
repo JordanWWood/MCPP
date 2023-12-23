@@ -32,6 +32,7 @@ inline SPacketPayload::SPacketPayload(SPacketPayload&& other) noexcept
     m_payload = other.m_payload;
     m_size = other.m_size;
     m_packetId = other.m_packetId;
+    m_startOffset = other.m_startOffset;
 
     other.m_payload = nullptr;
 }
@@ -51,6 +52,7 @@ inline SPacketPayload& SPacketPayload::operator=(SPacketPayload&& other)
     m_payload = other.m_payload;
     m_size = other.m_size;
     m_packetId = other.m_packetId;
+    m_startOffset = other.m_startOffset;
 
     other.m_payload = nullptr;
 
