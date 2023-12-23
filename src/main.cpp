@@ -5,26 +5,25 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/async.h>
-#include <spdlog/spdlog.h>
 
 int main(int argc, char** argv)
 {
     // Set up logging
-    spdlog::init_thread_pool(8192, 1);
-    auto stdout_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-    auto rotating_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>("server.log", 1024 * 1024 * 10, 3);
-    std::vector<spdlog::sink_ptr> sinks{ stdout_sink, rotating_sink };
-    auto logger = std::make_shared<spdlog::async_logger>("MCPP", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
-    spdlog::register_logger(logger);
-    spdlog::set_default_logger(logger);
+    MCLog::init_thread_pool(8192, 1);
+    auto stdout_sink = std::make_shared<MCLog::sinks::stdout_color_sink_mt>();
+    auto rotating_sink = std::make_shared<MCLog::sinks::rotating_file_sink_mt>("server.log", 1024 * 1024 * 10, 3);
+    std::vector<MCLog::sink_ptr> sinks{ stdout_sink, rotating_sink };
+    auto logger = std::make_shared<MCLog::async_logger>("MCPP", sinks.begin(), sinks.end(), MCLog::thread_pool(), MCLog::async_overflow_policy::block);
+    MCLog::register_logger(logger);
+    MCLog::set_default_logger(logger);
 
 #ifdef _DEBUG
-    spdlog::set_level(spdlog::level::debug);
+    MCLog::set_level(MCLog::level::debug);
 #endif
 
-    spdlog::set_pattern("[%H:%M:%S %z][%n][%t][%l] %v");
+    MCLog::set_pattern("[%H:%M:%S %z][%n][%t][%l] %v");
 
-    spdlog::info("Logger initialised");
+    MCLog::info("Logger initialised");
 
     // TODO make the port either a console arg or config option
     CMCServer server(25565);
@@ -32,6 +31,10 @@ int main(int argc, char** argv)
     if (server.Init())
     {
         while(server.Run()) {}
+    }
+    else
+    {
+        MCLog::critical("Failed to initialise MCServer... Exiting");
     }
     
     return 0;

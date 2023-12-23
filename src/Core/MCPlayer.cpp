@@ -1,8 +1,6 @@
 ﻿#include "pch.h"
 #include "MCPlayer.h"
 
-#include <spdlog/spdlog.h>
-
 #include <random>
 
 #include "Common/Packets/Handshake.h"
@@ -21,7 +19,7 @@ void CMCPlayer::RecvPackets()
 {
     bool success = m_pConnection->RecvPackets(this);
     if(!success)
-        spdlog::warn("Failure to recv packets needs to be implemented");
+        MCLog::warn("Failure to recv packets needs to be implemented");
     // TODO handle errors
 }
 
@@ -62,7 +60,7 @@ bool CMCPlayer::HandleHandshake(SPacketPayload&& payload)
     case 1: m_state = EClientState::eCS_Status; break;
     case 2: m_state = EClientState::eCS_Login; break;
     default:
-        spdlog::error("Incorrect next state in handshake. NextState[{}]", handshake.m_nextState);
+        MCLog::error("Incorrect next state in handshake. NextState[{}]", handshake.m_nextState);
         return false;
     }
 
@@ -73,34 +71,34 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
 {
     if(payload.m_packetId == 0)
     {
-        spdlog::debug("Received login start. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
+        MCLog::debug("Received login start. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
         
         LoginStart loginStart;
         loginStart.Deserialize(payload.GetDeserializeStartPtr());
 
         m_username = loginStart.m_username;
         
-        spdlog::debug("User from {} is {}", m_pConnection->GetRemoteAddress(), GetUsername());
+        MCLog::debug("User from {} is {}", m_pConnection->GetRemoteAddress(), GetUsername());
         
         // TODO mojang auth
         
         // Send over our public key
         SendEncryptionRequest();
 
-        spdlog::debug("Sent encryption request. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
+        MCLog::debug("Sent encryption request. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
         
         return true;
     }
 
     if (payload.m_packetId == 1)
     {
-        spdlog::debug("Received encryption response. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
+        MCLog::debug("Received encryption response. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
 
         SEncryptionResponse response;
         response.m_pServerKey = m_pServerKey;
 
         response.Deserialize(payload.GetDeserializeStartPtr());
-        spdlog::debug("Deserialized encryption response. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
+        MCLog::debug("Deserialized encryption response. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
         
         if (response.m_verifyTokenValue != m_verifyToken)
             return false;
@@ -108,7 +106,7 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
         m_pConnection->EnableEncryption();
         m_pConnection->SetAESKey(response.m_sharedSecret);
 
-        spdlog::debug("Enabled encryption. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
+        MCLog::debug("Enabled encryption. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
         
         return true;
     }

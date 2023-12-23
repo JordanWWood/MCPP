@@ -3,8 +3,6 @@
 
 #include <vector>
 
-#include <spdlog/spdlog.h>
-
 #ifdef _WIN32
 #include <WinSock2.h>
 #endif
@@ -50,7 +48,7 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
                 const bool result = pHandler->ProcessPacket(std::move(payload));
                 if (!result)
                 {
-                    spdlog::warn("Error processing packet. Disconnecting connection. PacketId[{}] Address[{}]", packetId, GetRemoteAddress().c_str());
+                    MCLog::warn("Error processing packet. Disconnecting connection. PacketId[{}] Address[{}]", packetId, GetRemoteAddress().c_str());
                 
                     closesocket(m_clientSocket);
                     m_socketState = ESocketState::eSS_CLOSED;
@@ -68,7 +66,7 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
 
     if (iResult == 0)
     {
-        spdlog::debug("Client disconnected. Address[{}]", GetRemoteAddress());
+        MCLog::debug("Client disconnected. Address[{}]", GetRemoteAddress());
         closesocket(m_clientSocket);
         m_socketState = ESocketState::eSS_CLOSED;
         return true;
@@ -82,7 +80,7 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
     }
 
     // If we make it here something went wrong
-    spdlog::error("Failed to receive packets from client. Error[{}] Address[{}]", error, GetRemoteAddress());
+    MCLog::error("Failed to receive packets from client. Error[{}] Address[{}]", error, GetRemoteAddress());
     
     closesocket(m_clientSocket);
     m_socketState = ESocketState::eSS_CLOSED;
@@ -102,7 +100,7 @@ bool CClientConnection::SendPacket(SPacketPayload&& payload)
     
     if (iResult == SOCKET_ERROR)
     {
-        spdlog::error("Failed to send payload to client. Error[{}] Address[{}]", WSAGetLastError(), GetRemoteAddress());
+        MCLog::error("Failed to send payload to client. Error[{}] Address[{}]", WSAGetLastError(), GetRemoteAddress());
 
         m_socketState = ESocketState::eSS_CLOSED;
         closesocket(m_clientSocket);

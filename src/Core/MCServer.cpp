@@ -6,7 +6,6 @@
 #include "Common/Packets/IPacket.h"
 
 #include <chrono>
-#include <spdlog/spdlog.h>
 
 #define MAIN_THREAD_UPDATE_RATE 20
 #define NETWORK_THREAD_UPDATE_RATE 120
@@ -29,10 +28,10 @@ CMCServer::CMCServer(uint16_t port)
 
 bool CMCServer::Init()
 {
-    spdlog::info("Initialising MC Server");
+    MCLog::info("Initialising MC Server");
     m_networkThread = std::thread(NetworkThread, this);
 
-    spdlog::info("Generating RSA key pair");
+    MCLog::info("Generating RSA key pair");
     m_pKeyPair = m_pTcpServer->GenerateRSAKeyPair();
     
     return true;
@@ -79,9 +78,9 @@ void CMCServer::NetworkRun()
                 if (player.IsDead())
                 {
                     if (player.GetCurrentState() >= EClientState::eCS_Login)
-                        spdlog::info("Client has disconnected. Username[{}] State[{}]", player.GetUsername(), static_cast<uint32_t>(player.GetCurrentState()));
+                        MCLog::info("Client has disconnected. Username[{}] State[{}]", player.GetUsername(), static_cast<uint32_t>(player.GetCurrentState()));
                     else
-                        spdlog::info("Server list ping disconnected. State[{}]", static_cast<uint32_t>(player.GetCurrentState()));
+                        MCLog::info("Server list ping disconnected. State[{}]", static_cast<uint32_t>(player.GetCurrentState()));
                     
                     it = m_players.erase(it); // This client is no longer connected. Remove it
                     continue;

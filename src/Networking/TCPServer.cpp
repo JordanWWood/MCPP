@@ -1,7 +1,6 @@
 ﻿#include "pch.h"
 #include "TCPServer.h"
 
-#include <spdlog/spdlog.h>
 #include "ClientConnection.h"
 #include "Encryption/RSAKeyPair.h"
 
@@ -46,7 +45,7 @@ bool CTCPServer::Listen()
     {
         m_listenSocketState = ESocketState::eSS_INVALID_ADDR;
 
-        spdlog::error("Error retrieving address info while creating listen socket");
+        MCLog::error("Error retrieving address info while creating listen socket");
         WSACleanup();
         return false;
     }
@@ -56,7 +55,7 @@ bool CTCPServer::Listen()
     {
         m_listenSocketState = ESocketState::eSS_INVALID;
 
-        spdlog::error("Error retrieving address info while creating listen socket");
+        MCLog::error("Error retrieving address info while creating listen socket");
         WSACleanup();
         return false;
     }
@@ -66,7 +65,7 @@ bool CTCPServer::Listen()
     {
         closesocket(m_listenSocket);
         
-        spdlog::error("Failed to change listen socket mode to non-blocking with error code {}", WSAGetLastError());
+        MCLog::error("Failed to change listen socket mode to non-blocking with error code {}", WSAGetLastError());
         WSACleanup();
         return false;
     }
@@ -76,7 +75,7 @@ bool CTCPServer::Listen()
     {
         m_listenSocketState = ESocketState::eSS_BIND_ERROR;
         
-        spdlog::error("Failed to bind to port {} with error code {}", m_port, WSAGetLastError());
+        MCLog::error("Failed to bind to port {} with error code {}", m_port, WSAGetLastError());
         closesocket(m_listenSocket);
         WSACleanup();
         return false;
@@ -89,13 +88,13 @@ bool CTCPServer::Listen()
     {
         m_listenSocketState = ESocketState::eSS_LISTEN_ERROR;
         
-        spdlog::error("Failed to listen on port {} with error code {}", m_port, WSAGetLastError());
+        MCLog::error("Failed to listen on port {} with error code {}", m_port, WSAGetLastError());
         closesocket(m_listenSocket);
         WSACleanup();
         return false;
     }
 
-    spdlog::info("Sucessfully started listening on {}", m_port);
+    MCLog::info("Sucessfully started listening on {}", m_port);
 
     m_listenSocketState = ESocketState::eSS_LISTEN;
 #endif
@@ -114,13 +113,13 @@ IConnectionPtr CTCPServer::AcceptConnection() const
         if(WSAGetLastError() == WSAEWOULDBLOCK)
             return nullptr;
 
-        spdlog::error("Failed to accept new client connect with error {}", WSAGetLastError());
+        MCLog::error("Failed to accept new client connect with error {}", WSAGetLastError());
 
         closesocket(m_listenSocket);
         return nullptr;
     }
 
-    spdlog::info("Accepting connection from {}", inet_ntoa(sa.sin_addr));
+    MCLog::info("Accepting connection from {}", inet_ntoa(sa.sin_addr));
     
     return std::make_shared<CClientConnection>(socket, inet_ntoa(sa.sin_addr));
 }
