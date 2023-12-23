@@ -2,9 +2,13 @@
 
 #include <spdlog/spdlog.h>
 
+#include <random>
+
 #include "Common/Packets/Handshake.h"
 #include "Common/Packets/IPacket.h"
 #include "Common/PacketPayload.h"
+#include "Common/Encryption/IRSAKeyPair.h"
+#include "Common/Packets/EncryptionRequest.h"
 #include "Common/Packets/LoginStart.h"
 #include "Common/Packets/StatusResponse.h"
 
@@ -67,15 +71,26 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
 {
     if(payload.m_packetId == 0)
     {
-        LoginStart login_start;
-        login_start.Deserialize(payload.GetDeserializeStartPtr());
-
-        m_username = login_start.m_username;
+        spdlog::debug("Received login start. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
         
-        // Send over our public key
+        LoginStart loginStart;
+        loginStart.Deserialize(payload.GetDeserializeStartPtr());
+
+        m_username = loginStart.m_username;
+        
+        spdlog::debug("User from {} is {}", m_pConnection->GetRemoteAddress(), GetUsername());
+        
         // TODO mojang auth
         
+        // Send over our public key
+        SendEncryptionRequest();
+        
         return true;
+    }
+
+    if (payload.m_packetId == 1)
+    {
+        spdlog::debug("Received encryption response. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
     }
 
     return true;
@@ -94,5 +109,32 @@ bool CMCPlayer::HandleStatus(SPacketPayload&& payload)
         payload.m_size = payload.m_size + 2;
         m_pConnection->SendPacket(std::move(payload));
     }
+    return true;
+}
+
+bool CMCPlayer::SendEncryptionRequest()
+{
+    SEncryptionRequest request;
+    std::string publicKey = m_pServerKey->GetAsnDerKey();
+        
+    request.m_publicKeyLength = publicKey.size();
+    request.m_publicKey = std::move(publicKey);
+
+    const std::string CHARACTERS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+    std::random_device random_device;
+    std::mt19937 generator(random_device());
+    std::uniform_int_distribution<> distribution(0, CHARACTERS.size() - 1);
+
+    std::string random_string;
+
+    for (std::size_t i = 0; i < 64; ++i)
+        random_string += CHARACTERS[distribution(generator)];
+
+    request.m_verifyTokenLength = random_string.size();
+    request.m_verifyToken = std::move(random_string);
+    
+    m_pConnection->SendPacket(request.Serialize());
+
     return true;
 }

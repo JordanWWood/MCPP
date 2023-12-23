@@ -6,10 +6,11 @@
 #include <mutex>
 #include <thread>
 #include <vector>
-#include <openssl/types.h>
 
 #include "Networking/TCPServer.h"
 #include "MCPlayer.h"
+
+struct IRSAKeyPair;
 
 class CMCServer
 {
@@ -28,5 +29,5 @@ private:
     std::thread m_networkThread;
     std::mutex m_networkLock;
 
-    RSA* m_rsaKey;
+    std::shared_ptr<IRSAKeyPair> m_pKeyPair;
 };

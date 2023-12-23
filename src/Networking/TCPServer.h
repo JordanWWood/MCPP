@@ -16,6 +16,7 @@
 #include <nunistd.h>
 #endif
 
+struct IRSAKeyPair;
 struct IConnection;
 using IConnectionPtr = std::shared_ptr<IConnection>;
 
@@ -31,6 +32,8 @@ public:
     // Check for any incoming connections, accept and create a port if there are any
     IConnectionPtr AcceptConnection() const;
     bool IsSocketClosed() const { return m_listenSocketState == ESocketState::eSS_CLOSED; }
+
+    std::shared_ptr<IRSAKeyPair> GenerateRSAKeyPair();
 
 private:
     SOCKET m_listenSocket { INVALID_SOCKET };

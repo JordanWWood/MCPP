@@ -2,6 +2,7 @@
 
 #include <spdlog/spdlog.h>
 #include "ClientConnection.h"
+#include "Encryption/RSAKeyPair.h"
 
 #pragma comment(lib, "Ws2_32.lib")
 
@@ -121,4 +122,13 @@ IConnectionPtr CTCPServer::AcceptConnection() const
     spdlog::info("Accepting connection from {}", inet_ntoa(sa.sin_addr));
     
     return std::make_shared<CClientConnection>(socket, inet_ntoa(sa.sin_addr));
+}
+
+std::shared_ptr<IRSAKeyPair> CTCPServer::GenerateRSAKeyPair()
+{
+    std::shared_ptr<IRSAKeyPair> pKey = std::make_shared<CRSAKeyPair>();
+    if(!pKey->Initialise())
+        return nullptr;
+
+    return pKey;
 }

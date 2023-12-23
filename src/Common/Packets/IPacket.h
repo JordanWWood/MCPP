@@ -30,7 +30,7 @@ public:
 
     static int32_t DeserializeVarInt(char* start, uint32_t& offset);
     static void SerializeVarInt(char* start, int32_t value, uint32_t& offset);
-    static uint32_t VarIntSize(int32_t value);
+    static uint8_t VarIntSize(int32_t value);
 
     static std::string DeserializeString(char* start, uint32_t maxSize, uint32_t& offset);
 };
@@ -83,7 +83,7 @@ inline void IPacket::SerializeVarInt(char* start, int32_t value, uint32_t& offse
     }
 }
 
-inline uint32_t IPacket::VarIntSize(int32_t value)
+inline uint8_t IPacket::VarIntSize(int32_t value)
 {
     uint32_t size = 0;
     while (true) {

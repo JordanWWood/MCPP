@@ -3,7 +3,7 @@
 #include "Common/PacketPayload.h"
 #include "Core/MCServer.h"
 
-struct SStatusResponse : IPacket
+struct SStatusResponse : public IPacket
 {
     // We'll never want to deserialize this packet. Only used for the server list
     virtual void Deserialize(char* start) override {}

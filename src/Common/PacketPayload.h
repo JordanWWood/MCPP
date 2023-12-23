@@ -8,12 +8,14 @@ struct SPacketPayload
     ~SPacketPayload();
     SPacketPayload(SPacketPayload&& other) noexcept
     {
-        m_payload = other.m_payload;
-        m_size = other.m_size;
-        m_packetId = other.m_packetId;
+        m_payload = std::move(other.m_payload);
+        m_size = std::move(other.m_size);
+        m_packetId = std::move(other.m_packetId);
 
         other.m_payload = nullptr;
     }
+
+    SPacketPayload(const SPacketPayload&& other) = delete;
 
     char* GetDeserializeStartPtr() { return m_payload + m_startOffset; }
 

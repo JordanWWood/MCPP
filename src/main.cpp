@@ -6,7 +6,6 @@
 #include <spdlog/async.h>
 #include <spdlog/spdlog.h>
 
-
 int main(int argc, char** argv)
 {
     // Set up logging

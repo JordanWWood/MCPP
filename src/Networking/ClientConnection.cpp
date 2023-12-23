@@ -25,7 +25,7 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
     char recvBuffer[DEFAULT_BUFLEN];
     constexpr int recvBufferLength{ DEFAULT_BUFLEN };
 
-    ZeroMemory(&recvBuffer, recvBufferLength);
+    memset(&recvBuffer, 0, recvBufferLength);
     
     const int iResult = recv(m_clientSocket, recvBuffer, recvBufferLength, 0);
     if (iResult > 0)
