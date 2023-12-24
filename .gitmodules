@@ -7,3 +7,9 @@
 [submodule "vendor/json"]
 	path = vendor/json
 	url = https://github.com/nlohmann/json.git
+[submodule "vendor/curl"]
+	path = vendor/curl
+	url = https://github.com/curl/curl.git
+[submodule "vendor/curlcpp"]
+	path = vendor/curlcpp
+	url = https://github.com/JosephP91/curlcpp.git

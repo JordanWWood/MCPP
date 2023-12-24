@@ -7,9 +7,14 @@
 #include <WinSock2.h>
 #endif
 
+#include <openssl/bn.h>
+#include <openssl/sha.h>
+#include <openssl/types.h>
+
 #include "Common/IPacketHandler.h"
 #include "Common/PacketPayload.h"
 #include "Common/Packets/IPacket.h"
+#include "Encryption/AuthHash.h"
 
 #define DEFAULT_BUFLEN 512
 
@@ -108,6 +113,16 @@ bool CClientConnection::SendPacket(SPacketPayload&& payload)
     }
     
     return false;
+}
+
+std::string CClientConnection::GenerateHexDigest(std::string publicKey, std::string sharedSecret)
+{
+    SAuthHash hasher;
+    hasher.Update("");
+    hasher.Update(sharedSecret);
+    hasher.Update(publicKey);
+    
+    return hasher.Finalise();
 }
 
 SPacketPayload CClientConnection::ReadUnecryptedPacket(char* start, uint32_t& offset)

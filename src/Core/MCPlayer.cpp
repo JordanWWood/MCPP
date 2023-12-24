@@ -79,10 +79,6 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
         m_username = loginStart.m_username;
         
         MCLog::debug("User from {} is {}", m_pConnection->GetRemoteAddress(), GetUsername());
-        
-        // TODO mojang auth
-        
-        // Send over our public key
         SendEncryptionRequest();
 
         MCLog::debug("Sent encryption request. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
@@ -105,8 +101,14 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
         
         m_pConnection->EnableEncryption();
         m_pConnection->SetAESKey(response.m_sharedSecret);
-
+        
         MCLog::debug("Enabled encryption. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
+        MCLog::debug("Beginning authentication with mojang. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
+
+        std::string digest = m_pConnection->GenerateHexDigest(m_pServerKey->GetAsnDerKey(), response.m_sharedSecret);
+        MCLog::debug("Generated digest. Digest[{}] Address[{}] Username[{}]", digest, m_pConnection->GetRemoteAddress(), GetUsername());        
+
+        TestCurl();
         
         return true;
     }

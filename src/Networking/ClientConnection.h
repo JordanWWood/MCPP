@@ -20,6 +20,8 @@ public:
     
     virtual void SetAESKey(std::string key) override { m_aesKey = key; }
     virtual void EnableEncryption() override { m_encryptionEnabled = true; }
+
+    virtual std::string GenerateHexDigest(std::string publicKey, std::string sharedSecret) override;
     
 private:
     SPacketPayload ReadUnecryptedPacket(char* start, uint32_t& offset);

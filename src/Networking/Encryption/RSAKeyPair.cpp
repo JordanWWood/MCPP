@@ -99,7 +99,6 @@ std::string CRSAKeyPair::Encrypt(std::string& input) const
         EVP_PKEY_CTX_free(ctx);
         return "";
     }
-
     
     // Perform the encryption
     unsigned char* cypherText = static_cast<unsigned char*>(OPENSSL_malloc(encryptedSize));
