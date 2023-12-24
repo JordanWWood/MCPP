@@ -4,8 +4,6 @@
 #include "ClientConnection.h"
 #include "Encryption/RSAKeyPair.h"
 
-#pragma comment(lib, "Ws2_32.lib")
-
 CTCPServer::CTCPServer(const uint16_t port)
     : m_port(port)
 {}

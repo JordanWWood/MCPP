@@ -51,7 +51,7 @@ project "MCPP"
     kind "ConsoleApp"
     language "C++"
     targetdir "bin64/%{cfg.buildcfg}"
-	links { "spdlog", "libcurl", "curlcpp" }
+    links { "spdlog", "libcurl", "curlcpp" }
 	defines { "CURL_STATICLIB" }
 	
 	cppdialect "C++20"
@@ -75,7 +75,14 @@ project "MCPP"
         system "windows"
         architecture "x64"
         toolset "msc"
-        links { "crypt32.lib", "ws2_32.lib", "wldap32.lib", os.getenv("OPENSSL_INSTALL_DIR") .. "/lib/libcrypto.lib", os.getenv("OPENSSL_INSTALL_DIR") .. "/lib/openssl.lib", os.getenv("OPENSSL_INSTALL_DIR") .. "/lib/libssl.lib"}
+        links { 
+            "crypt32.lib", 
+            "ws2_32.lib", 
+            "wldap32.lib", 
+            os.getenv("OPENSSL_INSTALL_DIR") .. "/lib/libcrypto.lib", 
+            os.getenv("OPENSSL_INSTALL_DIR") .. "/lib/openssl.lib", 
+            os.getenv("OPENSSL_INSTALL_DIR") .. "/lib/libssl.lib"
+        }
 
     filter { "platforms:Linux" }
         system "linux"

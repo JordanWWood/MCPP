@@ -2,15 +2,15 @@
 
 #include <memory>
 #include <string>
+#include <nlohmann/json.hpp>
 
 #include "Common\IPacketHandler.h"
-#include "Common\IConnection.h"
 
 struct IRSAKeyPair;
 enum class EClientState : uint8_t;
 struct SPacketPayload;
-struct IConnection;
 
+struct IConnection;
 using IConnectionPtr = std::shared_ptr<IConnection>;
 
 class CMCPlayer : public IPacketHandler
@@ -21,14 +21,15 @@ public:
         , m_pServerKey(pServerKey)
     {}
     
-    void RecvPackets();
+    void NetworkTick();
     virtual bool ProcessPacket(SPacketPayload&& payload) final;
 
-    bool IsDead() const { return m_pConnection->IsSocketClosed(); }
+    bool IsDead() const;
     std::string GetUsername() const { return m_username; }
     EClientState GetCurrentState() const { return m_state; }
 private:
     bool HandleHandshake(SPacketPayload&& payload);
+    nlohmann::json Debug_BlockingQueryMojang(std::string digest) const;
     bool HandleLogin(SPacketPayload&& payload);
     bool HandleStatus(SPacketPayload&& payload);
 

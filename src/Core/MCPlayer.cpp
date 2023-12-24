@@ -12,10 +12,17 @@
 #include "Common/Packets/LoginStart.h"
 #include "Common/Packets/StatusResponse.h"
 
+#include "Common/IConnection.h"
+
+#include "curl_easy.h"
+#include "curl_form.h"
+#include "curl_ios.h"
+#include "curl_exception.h"
+
 // TODO do something better than this
 #define PROTOCOL_VERSION 765
 
-void CMCPlayer::RecvPackets()
+void CMCPlayer::NetworkTick()
 {
     bool success = m_pConnection->RecvPackets(this);
     if(!success)
@@ -47,6 +54,11 @@ bool CMCPlayer::ProcessPacket(SPacketPayload&& payload)
     return true;
 }
 
+bool CMCPlayer::IsDead() const
+{
+    return m_pConnection->IsSocketClosed();
+}
+
 bool CMCPlayer::HandleHandshake(SPacketPayload&& payload)
 {
     SHandshake handshake;
@@ -65,6 +77,35 @@ bool CMCPlayer::HandleHandshake(SPacketPayload&& payload)
     }
 
     return true;
+}
+
+nlohmann::json CMCPlayer::Debug_BlockingQueryMojang(std::string digest) const
+{
+    std::string url("https://sessionserver.mojang.com/session/minecraft/hasJoined?username=");
+    url.append(GetUsername());
+    url.append("&serverId=");
+    url.append(digest);
+    std::stringstream str;
+    try
+    {
+        curl::curl_ios<std::stringstream> writer(str);
+        curl::curl_easy easy(writer);
+
+        easy.add<CURLOPT_URL>(url.data());
+        easy.add<CURLOPT_FOLLOWLOCATION>(1L);
+        easy.add<CURLOPT_SSL_VERIFYPEER>(0);
+
+        easy.perform();
+    }
+    catch (curl::curl_easy_exception const & error)
+    {
+        auto errors = error.get_traceback();
+        error.print_traceback();
+    }
+
+    MCLog::debug("Mojang session server response {}", str.str());
+    
+    return nlohmann::json::parse(str.str());;
 }
 
 bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
@@ -107,6 +148,8 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
 
         std::string digest = m_pConnection->GenerateHexDigest(m_pServerKey->GetAsnDerKey(), response.m_sharedSecret);
         MCLog::debug("Generated digest. Digest[{}] Address[{}] Username[{}]", digest, m_pConnection->GetRemoteAddress(), GetUsername());        
+
+        nlohmann::json json = Debug_BlockingQueryMojang(digest);
         
         return true;
     }

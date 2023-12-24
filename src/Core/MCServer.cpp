@@ -1,6 +1,6 @@
 ﻿#include "pch.h"
-#include "MCServer.h"
 
+#include "MCServer.h"
 #include "MCPlayer.h"
 
 #include "Common/Packets/IPacket.h"
@@ -61,19 +61,19 @@ void CMCServer::NetworkRun()
             break;
 
         {
-            std::lock_guard<std::mutex> lock(m_networkLock); 
+            std::lock_guard lock(m_networkLock); 
             
             // Network update
             // 1 Accept new connections
             if (IConnectionPtr pClient = m_pTcpServer->AcceptConnection())
                 m_players.emplace_back(pClient, m_pKeyPair);
 
-            // 2 Process packets
+            // 2 Update current connections
             // TODO move to own threads
             for (std::vector<CMCPlayer>::iterator it = m_players.begin(); it != m_players.end();)
             {
                 CMCPlayer& player = *it;
-                player.RecvPackets();
+                player.NetworkTick();
 
                 if (player.IsDead())
                 {
