@@ -107,8 +107,6 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
 
         std::string digest = m_pConnection->GenerateHexDigest(m_pServerKey->GetAsnDerKey(), response.m_sharedSecret);
         MCLog::debug("Generated digest. Digest[{}] Address[{}] Username[{}]", digest, m_pConnection->GetRemoteAddress(), GetUsername());        
-
-        TestCurl();
         
         return true;
     }
