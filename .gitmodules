@@ -13,3 +13,9 @@
 [submodule "vendor/curlcpp"]
 	path = vendor/curlcpp
 	url = https://github.com/JosephP91/curlcpp.git
+[submodule "vendor/uuid"]
+	path = vendor/uuid
+	url = https://github.com/crashoz/uuid_v4.git
+[submodule "vendor/optick"]
+	path = vendor/optick
+	url = https://github.com/bombomby/optick.git

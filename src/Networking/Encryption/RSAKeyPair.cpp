@@ -56,7 +56,7 @@ bool CRSAKeyPair::Initialise()
     unsigned char* begin = derBuffer;
 
     // TODO this is deprecated figure out the snazzy new way to do this
-    rsa_st* pRSA = EVP_PKEY_get1_RSA(m_pKey);
+    RSA* pRSA = EVP_PKEY_get1_RSA(m_pKey);
     int length = i2d_RSA_PUBKEY(pRSA, &derBuffer);
 
     m_asnDerPublicKey = std::string(begin, begin + length);
@@ -64,6 +64,8 @@ bool CRSAKeyPair::Initialise()
     // Clean up
     BN_free(bne);
     EVP_PKEY_CTX_free(ctx);
+    RSA_free(pRSA);
+    
     delete[] begin;
 
     return true;

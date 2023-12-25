@@ -4,7 +4,8 @@
 #include <string>
 #include <nlohmann/json.hpp>
 
-#include "Common\IPacketHandler.h"
+#include "Common/IPacketHandler.h"
+#include "Common/HTTP/HTTPGet.h"
 
 struct IRSAKeyPair;
 enum class EClientState : uint8_t;
@@ -29,7 +30,7 @@ public:
     EClientState GetCurrentState() const { return m_state; }
 private:
     bool HandleHandshake(SPacketPayload&& payload);
-    nlohmann::json Debug_BlockingQueryMojang(std::string digest) const;
+    nlohmann::json Debug_BlockingQueryMojang(const std::string& digest) const;
     bool HandleLogin(SPacketPayload&& payload);
     bool HandleStatus(SPacketPayload&& payload);
 
@@ -40,6 +41,8 @@ private:
     IConnectionPtr m_pConnection{ nullptr };
     EClientState m_state { static_cast<EClientState>(0) };
     std::shared_ptr<IRSAKeyPair> m_pServerKey { nullptr };
+
+    std::vector<CHTTPGet> m_runningGetRequest;
 
     std::string m_verifyToken;
 };

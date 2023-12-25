@@ -5,7 +5,8 @@
 
 struct SEncryptionRequest : public IPacket
 {
-    // TODO for connecting to other servers
+    // We will connect to other servers unencrypted since it'll be offline mode
+    // In theory we'll never need to Deserialize this packet
     virtual void Deserialize(char* start) override
     {
         

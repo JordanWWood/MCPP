@@ -44,7 +44,7 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
             uint32_t offset = 0;
             if (!m_encryptionEnabled)
             {
-                SPacketPayload payload = ReadUnecryptedPacket(start, offset);
+                SPacketPayload payload = ReadUnencryptedPacket(start, offset);
 
                 // Shift the start to the beginning of what would be the next packet
                 start = start + (payload.m_size + offset);
@@ -125,7 +125,7 @@ std::string CClientConnection::GenerateHexDigest(std::string publicKey, std::str
     return hasher.Finalise();
 }
 
-SPacketPayload CClientConnection::ReadUnecryptedPacket(char* start, uint32_t& offset)
+SPacketPayload CClientConnection::ReadUnencryptedPacket(char* start, uint32_t& offset)
 {
     // We take one away from the payload size since we read the packet id out immediately
     const uint32_t payloadSize = IPacket::DeserializeVarInt(start, offset);

@@ -16,7 +16,8 @@ struct SEncryptionResponse : public IPacket
         m_verifyTokenValue = m_pServerKey->Decrypt(encryptedVerifyToken);
     }
 
-    // TODO for connecting to other servers
+    // We will connect to other servers unencrypted since it'll be offline mode
+    // In theory we'll never need to Serialize this packet
     virtual SPacketPayload Serialize() override
     {
         return SPacketPayload();

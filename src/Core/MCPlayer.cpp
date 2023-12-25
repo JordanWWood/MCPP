@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 #include "MCPlayer.h"
 
 #include <random>
@@ -14,8 +14,9 @@
 
 #include "Common/IConnection.h"
 
+#include "Common/Utils/uuid.h"
+
 #include "curl_easy.h"
-#include "curl_form.h"
 #include "curl_ios.h"
 #include "curl_exception.h"
 
@@ -27,7 +28,10 @@ void CMCPlayer::NetworkTick()
     bool success = m_pConnection->RecvPackets(this);
     if(!success)
         MCLog::warn("Failure to recv packets needs to be implemented");
-    // TODO handle errors
+
+    // Update any running get request
+    for(CHTTPGet& request : m_runningGetRequest)
+        request.Update();
 }
 
 bool CMCPlayer::ProcessPacket(SPacketPayload&& payload)
@@ -79,12 +83,13 @@ bool CMCPlayer::HandleHandshake(SPacketPayload&& payload)
     return true;
 }
 
-nlohmann::json CMCPlayer::Debug_BlockingQueryMojang(std::string digest) const
+nlohmann::json CMCPlayer::Debug_BlockingQueryMojang(const std::string& digest) const
 {
     std::string url("https://sessionserver.mojang.com/session/minecraft/hasJoined?username=");
     url.append(GetUsername());
     url.append("&serverId=");
     url.append(digest);
+    
     std::stringstream str;
     try
     {
@@ -105,7 +110,7 @@ nlohmann::json CMCPlayer::Debug_BlockingQueryMojang(std::string digest) const
 
     MCLog::debug("Mojang session server response {}", str.str());
     
-    return nlohmann::json::parse(str.str());;
+    return nlohmann::json::parse(str.str());
 }
 
 bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
@@ -150,6 +155,14 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
         MCLog::debug("Generated digest. Digest[{}] Address[{}] Username[{}]", digest, m_pConnection->GetRemoteAddress(), GetUsername());        
 
         nlohmann::json json = Debug_BlockingQueryMojang(digest);
+
+        std::string url("https://sessionserver.mojang.com/session/minecraft/hasJoined?username=");
+        url.append(GetUsername());
+        url.append("&serverId=");
+        url.append(digest);
+        
+        CHTTPGet& request = m_runningGetRequest.emplace_back(CHTTPGet());
+        request.AddRequest(url, [](bool, std::string) {});
         
         return true;
     }

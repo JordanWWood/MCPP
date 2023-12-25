@@ -24,7 +24,7 @@ public:
     virtual std::string GenerateHexDigest(std::string publicKey, std::string sharedSecret) override;
     
 private:
-    SPacketPayload ReadUnecryptedPacket(char* start, uint32_t& offset);
+    SPacketPayload ReadUnencryptedPacket(char* start, uint32_t& offset);
     char* DecryptPacket(char* start);
     char* EncryptPacket(char* start);
     
