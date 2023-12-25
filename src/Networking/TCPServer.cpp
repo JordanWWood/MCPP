@@ -18,6 +18,8 @@ CTCPServer::~CTCPServer()
 
 bool CTCPServer::Listen()
 {
+    OPTICK_EVENT();
+
 #ifdef _WIN32
     WSADATA wsaData;
     int iResult;
@@ -102,6 +104,8 @@ bool CTCPServer::Listen()
 
 IConnectionPtr CTCPServer::AcceptConnection() const
 {
+    OPTICK_EVENT();
+
     struct sockaddr_in sa = { 0 }; /* for TCP/IP */
     socklen_t socklen = sizeof sa;
 
@@ -124,6 +128,8 @@ IConnectionPtr CTCPServer::AcceptConnection() const
 
 std::shared_ptr<IRSAKeyPair> CTCPServer::GenerateRSAKeyPair()
 {
+    OPTICK_EVENT();
+
     std::shared_ptr<IRSAKeyPair> pKey = std::make_shared<CRSAKeyPair>();
     if(!pKey->Initialise())
         return nullptr;

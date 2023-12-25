@@ -6,8 +6,8 @@ project "MCPP"
     kind "ConsoleApp"
     language "C++"
     targetdir "bin64/%{cfg.buildcfg}"
-    links { "spdlog", "libcurl", "curlcpp" }
-	defines { "CURL_STATICLIB" }
+    links { "OptickCore", "spdlog", "libcurl", "curlcpp" }
+	defines { "CURL_STATICLIB", "MT_INSTRUMENTED_BUILD" }
 	
 	cppdialect "C++20"
     
@@ -19,13 +19,16 @@ project "MCPP"
         "vendor/spdlog/include", 
         "vendor/json/include", 
         os.getenv("OPENSSL_INSTALL_DIR") .. "/include", 
+		"vendor/curl/include",
         "vendor/curlcpp/include", 
+        "vendor/uuid",
+		"vendor/optick/src"
     }
 
     files { "src/**.h", "src/**.cpp" }
 
     filter "configurations:Debug"
-        defines { "DEBUG" }
+        defines { "DEBUG", "USE_OPTICK=1" }
         symbols "On"
 
     filter "configurations:Release"
@@ -40,8 +43,7 @@ project "MCPP"
             "crypt32.lib", 
             "ws2_32.lib", 
             "wldap32.lib", 
-            os.getenv("OPENSSL_INSTALL_DIR") .. "/lib/libcrypto.lib", 
-            os.getenv("OPENSSL_INSTALL_DIR") .. "/lib/openssl.lib", 
+            os.getenv("OPENSSL_INSTALL_DIR") .. "/lib/libcrypto.lib",
             os.getenv("OPENSSL_INSTALL_DIR") .. "/lib/libssl.lib"
         }
 
@@ -49,7 +51,7 @@ project "MCPP"
         system "linux"
         architecture "x64"
         toolset "gcc"
-
+		
 group "Libs"
     project "zlib"
     	kind "StaticLib"
@@ -95,4 +97,29 @@ group "Libs"
     	defines { "SPDLOG_COMPILED_LIB" }
     	
     	files { "vendor/spdlog/src/**.cpp", "vendor/spdlog/include/**.h" }
-    
+group ""
+
+group "Tools"
+	project "OptickCore"
+		kind "SharedLib"
+		targetdir "bin64/%{cfg.buildcfg}"
+		language "C++"
+		defines { "_CRT_SECURE_NO_WARNINGS", "OPTICK_LIB=1", "OPTICK_EXPORTS", "OPTICK_ENABLE_GPU_D3D12=0", "OPTICK_ENABLE_GPU_VULKAN=0" }
+	
+		includedirs { "vendor/optick/src" }
+		
+		files {
+			"vendor/optick/src/**.cpp",
+			"vendor/optick/src/**.h", 
+		}
+		vpaths {
+			["api"] = { 
+				"vendor/optick/src/optick.h",
+				"vendor/optick/src/optick.config.h",
+			},
+		}
+		
+		filter "configurations:Debug"
+            defines { "DEBUG" }
+            symbols "On"
+group ""

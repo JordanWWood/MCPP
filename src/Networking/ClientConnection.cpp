@@ -26,6 +26,8 @@ CClientConnection::~CClientConnection()
 
 bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
 {
+    OPTICK_EVENT();
+
     char recvBuffer[DEFAULT_BUFLEN];
     constexpr int recvBufferLength{ DEFAULT_BUFLEN };
 

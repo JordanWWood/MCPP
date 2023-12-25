@@ -18,6 +18,8 @@ using TNetworkThreadFrame = std::chrono::duration<int64_t, std::ratio<1, NETWORK
 
 static void NetworkThread(CMCServer* mcServer)
 {
+    OPTICK_THREAD("Network Thread");
+
     mcServer->NetworkRun();
 }
 
@@ -28,6 +30,8 @@ CMCServer::CMCServer(uint16_t port)
 
 bool CMCServer::Init()
 {
+    OPTICK_EVENT();
+
     MCLog::info("Initialising MC Server");
     m_networkThread = std::thread(NetworkThread, this);
 
@@ -40,8 +44,7 @@ bool CMCServer::Init()
 bool CMCServer::Run()
 {
     THREAD_UPDATE_BEGIN(TMainThreadFrame);
-
-    
+    OPTICK_FRAME("Main Thread");
 
     THREAD_UPDATE_END();
 

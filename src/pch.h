@@ -5,5 +5,6 @@
 #include <cstdint>
 
 #include <spdlog/spdlog.h>
+#include <optick.h>
 
 namespace MCLog = ::spdlog;

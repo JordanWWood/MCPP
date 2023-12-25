@@ -8,6 +8,8 @@
 
 int main(int argc, char** argv)
 {
+    OPTICK_THREAD("Main Thread");
+
     // Set up logging
     MCLog::init_thread_pool(8192, 1);
     auto stdout_sink = std::make_shared<MCLog::sinks::stdout_color_sink_mt>();

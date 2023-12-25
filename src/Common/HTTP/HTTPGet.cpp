@@ -15,6 +15,8 @@ CHTTPGet::CHTTPGet(CHTTPGet&& other) noexcept
 
 void CHTTPGet::Update()
 {
+    OPTICK_EVENT();
+
     m_multiHandle.perform();
 
     std::unique_ptr<curl::curl_multi::curl_message> message = m_multiHandle.get_next_finished();
@@ -52,6 +54,8 @@ void CHTTPGet::Update()
 
 void CHTTPGet::AddRequest(const std::string& uri, std::function<void(bool, std::string)>&& callback)
 {
+    OPTICK_EVENT();
+
     auto *output_stream = new std::ostringstream;
     curl::curl_ios<std::ostringstream>* curl_stream = new curl::curl_ios<std::ostringstream>(*output_stream);
     

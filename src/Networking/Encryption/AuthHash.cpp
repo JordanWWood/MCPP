@@ -6,6 +6,8 @@
 
 std::string SAuthHash::Finalise()
 {
+    OPTICK_EVENT();
+
     auto result = std::string();
 
     auto buf = std::array< std::uint8_t, 20 >();

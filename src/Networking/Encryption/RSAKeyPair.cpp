@@ -13,6 +13,8 @@ CRSAKeyPair::~CRSAKeyPair()
 
 bool CRSAKeyPair::Initialise()
 {
+    OPTICK_EVENT();
+
     int				ret = 0;
     BIGNUM			*bne = nullptr;
 

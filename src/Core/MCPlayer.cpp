@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "MCPlayer.h"
 
 #include <random>
@@ -25,6 +25,8 @@
 
 void CMCPlayer::NetworkTick()
 {
+    OPTICK_EVENT();
+
     bool success = m_pConnection->RecvPackets(this);
     if(!success)
         MCLog::warn("Failure to recv packets needs to be implemented");
@@ -36,6 +38,8 @@ void CMCPlayer::NetworkTick()
 
 bool CMCPlayer::ProcessPacket(SPacketPayload&& payload)
 {
+    OPTICK_EVENT();
+
     switch (m_state)
     {
     case EClientState::eCS_Handshake:
@@ -65,6 +69,8 @@ bool CMCPlayer::IsDead() const
 
 bool CMCPlayer::HandleHandshake(SPacketPayload&& payload)
 {
+    OPTICK_EVENT();
+
     SHandshake handshake;
     handshake.Deserialize(payload.GetDeserializeStartPtr());
 
@@ -83,38 +89,10 @@ bool CMCPlayer::HandleHandshake(SPacketPayload&& payload)
     return true;
 }
 
-nlohmann::json CMCPlayer::Debug_BlockingQueryMojang(const std::string& digest) const
-{
-    std::string url("https://sessionserver.mojang.com/session/minecraft/hasJoined?username=");
-    url.append(GetUsername());
-    url.append("&serverId=");
-    url.append(digest);
-    
-    std::stringstream str;
-    try
-    {
-        curl::curl_ios<std::stringstream> writer(str);
-        curl::curl_easy easy(writer);
-
-        easy.add<CURLOPT_URL>(url.data());
-        easy.add<CURLOPT_FOLLOWLOCATION>(1L);
-        easy.add<CURLOPT_SSL_VERIFYPEER>(0);
-
-        easy.perform();
-    }
-    catch (curl::curl_easy_exception const & error)
-    {
-        auto errors = error.get_traceback();
-        error.print_traceback();
-    }
-
-    MCLog::debug("Mojang session server response {}", str.str());
-    
-    return nlohmann::json::parse(str.str());
-}
-
 bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
 {
+    OPTICK_EVENT();
+
     if(payload.m_packetId == 0)
     {
         MCLog::debug("Received login start. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
@@ -154,8 +132,6 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
         std::string digest = m_pConnection->GenerateHexDigest(m_pServerKey->GetAsnDerKey(), response.m_sharedSecret);
         MCLog::debug("Generated digest. Digest[{}] Address[{}] Username[{}]", digest, m_pConnection->GetRemoteAddress(), GetUsername());        
 
-        nlohmann::json json = Debug_BlockingQueryMojang(digest);
-
         std::string url("https://sessionserver.mojang.com/session/minecraft/hasJoined?username=");
         url.append(GetUsername());
         url.append("&serverId=");
@@ -163,6 +139,8 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
         
         CHTTPGet& request = m_runningGetRequest.emplace_back(CHTTPGet());
         request.AddRequest(url, [](bool, std::string) {});
+
+        MCLog::debug("Queued authentication request. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
         
         return true;
     }
@@ -172,6 +150,8 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
 
 bool CMCPlayer::HandleStatus(SPacketPayload&& payload)
 {
+    OPTICK_EVENT();
+
     if(payload.m_packetId == 0)
     {
         SStatusResponse response;
@@ -188,6 +168,8 @@ bool CMCPlayer::HandleStatus(SPacketPayload&& payload)
 
 bool CMCPlayer::SendEncryptionRequest()
 {
+    OPTICK_EVENT();
+
     SEncryptionRequest request;
     std::string publicKey = m_pServerKey->GetAsnDerKey();
         
