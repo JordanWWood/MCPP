@@ -137,8 +137,11 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
         url.append("&serverId=");
         url.append(digest);
         
+        // TODO it'd be good to have something that explicitly handles curl requests along with updating them. This is nasty but I want to keep powering on with the login flow
         CHTTPGet& request = m_runningGetRequest.emplace_back(CHTTPGet());
-        request.AddRequest(url, [](bool, std::string) {});
+        request.AddRequest(url, [](bool success, std::string body) {
+
+        });
 
         MCLog::debug("Queued authentication request. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
         

@@ -20,7 +20,17 @@ public:
 private:
     curl::curl_multi m_multiHandle;
 
-    std::unordered_map<CURL*, curl::curl_ios<std::ostringstream>*> m_easyStreams;
-    std::map<CURL*, std::string> m_requestUris;
-    std::map<CURL*, curl::curl_easy*> m_handers;
+    struct SActiveRequest {
+        SActiveRequest() = default;
+        ~SActiveRequest();
+
+        std::string m_requestUri;
+
+        curl::curl_ios<std::ostringstream>* m_easyStream{ nullptr };
+        curl::curl_easy* m_handler{ nullptr };
+
+        THTTPCallback m_callback{ nullptr };
+    };
+
+    std::unordered_map<CURL*, SActiveRequest> m_activeRequests;
 };
