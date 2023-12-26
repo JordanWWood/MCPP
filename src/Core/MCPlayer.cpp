@@ -14,12 +14,6 @@
 
 #include "Common/IConnection.h"
 
-#include "Common/Utils/uuid.h"
-
-#include "curl_easy.h"
-#include "curl_ios.h"
-#include "curl_exception.h"
-
 // TODO do something better than this
 #define PROTOCOL_VERSION 765
 

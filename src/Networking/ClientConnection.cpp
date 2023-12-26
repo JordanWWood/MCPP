@@ -8,6 +8,7 @@
 #endif
 
 #include <openssl/bn.h>
+#include <openssl/evp.h>
 #include <openssl/sha.h>
 #include <openssl/types.h>
 
@@ -150,12 +151,44 @@ SPacketPayload CClientConnection::ReadUnencryptedPacket(char* start, uint32_t& o
     return payload;
 }
 
-char* CClientConnection::DecryptPacket(char* start)
+unsigned char* CClientConnection::DecryptPacket(unsigned char* start, int length) const
 {
+    EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+    EVP_DecryptInit_ex(ctx, EVP_aes_256_cfb8(), nullptr, reinterpret_cast<const unsigned char*>(m_aesKey.c_str()),
+                       reinterpret_cast<const unsigned char*>(m_aesKey.c_str));
+    
+    unsigned char* decryptedText = new unsigned char[length + EVP_MAX_BLOCK_LENGTH];
+    int decryptedLength = 0;
+    if (EVP_DecryptUpdate(ctx, start, &length, decryptedText, decryptedLength) != 1) {
+        MCLog::error("Error decrypting data");
+        EVP_CIPHER_CTX_free(ctx);
+        return nullptr;
+    }
+
+    EVP_DecryptFinal_ex(ctx, start + length, &length);
+
+    EVP_CIPHER_CTX_free(ctx);
+    
     return nullptr;
 }
 
-char* CClientConnection::EncryptPacket(char* start)
+unsigned char* CClientConnection::EncryptPacket(unsigned char* start, int length, int& outCipherLength) const
 {
-    return nullptr;
+    EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+    EVP_EncryptInit_ex(ctx, EVP_aes_128_cfb8(), nullptr, reinterpret_cast<const unsigned char*>(m_aesKey.c_str()),
+                       reinterpret_cast<const unsigned char*>(m_aesKey.c_str()));
+
+    unsigned char* cipherText = new unsigned char[length + EVP_MAX_BLOCK_LENGTH];
+    int cipherLength = 0;
+    if(EVP_EncryptUpdate(ctx, start, &length, cipherText, cipherLength) != 0)
+    {
+        MCLog::error("Error encrypting data");
+        EVP_CIPHER_CTX_free(ctx);
+        return nullptr;
+    }
+
+    EVP_EncryptFinal_ex(ctx, start + length, &length);
+
+    EVP_CIPHER_CTX_free(ctx);
+    return cipherText;
 }

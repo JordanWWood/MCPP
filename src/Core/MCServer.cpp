@@ -58,42 +58,49 @@ void CMCServer::NetworkRun()
     while (!m_quit)
     {
         THREAD_UPDATE_BEGIN(TNetworkThreadFrame);
-
-        // TODO we should reestablish the listen socket if it closes. For now the application just exits
-        if (m_pTcpServer->IsSocketClosed())
-            break;
-
+        
         {
-            std::lock_guard lock(m_networkLock); 
-            
-            // Network update
-            // 1 Accept new connections
-            if (IConnectionPtr pClient = m_pTcpServer->AcceptConnection())
-                m_players.emplace_back(pClient, m_pKeyPair);
+            OPTICK_EVENT("Network Update");
 
-            // 2 Update current connections
-            // TODO move to own threads
-            for (std::vector<CMCPlayer>::iterator it = m_players.begin(); it != m_players.end();)
+            // TODO we should reestablish the listen socket if it closes. For now the application just exits
+            if (m_pTcpServer->IsSocketClosed())
+                break;
+
             {
-                CMCPlayer& player = *it;
-                player.NetworkTick();
+                std::lock_guard lock(m_networkLock);
 
-                if (player.IsDead())
+                // Network update
+                // 1 Accept new connections
+                if (IConnectionPtr pClient = m_pTcpServer->AcceptConnection())
+                    m_players.emplace_back(pClient, m_pKeyPair);
+
+                // 2 Update current connections
+                // TODO move to own threads
+                for (std::vector<CMCPlayer>::iterator it = m_players.begin(); it != m_players.end();)
                 {
-                    if (player.GetCurrentState() >= EClientState::eCS_Login)
-                        MCLog::info("Client has disconnected. Username[{}] State[{}]", player.GetUsername(), static_cast<uint32_t>(player.GetCurrentState()));
-                    else
-                        MCLog::info("Server list ping disconnected. State[{}]", static_cast<uint32_t>(player.GetCurrentState()));
-                    
-                    it = m_players.erase(it); // This client is no longer connected. Remove it
-                    continue;
-                }
+                    CMCPlayer& player = *it;
+                    player.NetworkTick();
 
-                ++it;
+                    if (player.IsDead())
+                    {
+                        if (player.GetCurrentState() >= EClientState::eCS_Login)
+                            MCLog::info("Client has disconnected. Username[{}] State[{}]", player.GetUsername(), static_cast<uint32_t>(player.GetCurrentState()));
+                        else
+                            MCLog::info("Server list ping disconnected. State[{}]", static_cast<uint32_t>(player.GetCurrentState()));
+
+                        it = m_players.erase(it); // This client is no longer connected. Remove it
+                        continue;
+                    }
+
+                    ++it;
+                }
             }
         }
 
-        THREAD_UPDATE_END();
+        {
+            OPTICK_EVENT("Sleep");
+            THREAD_UPDATE_END();
+        }
     }
 
     m_quit = true;

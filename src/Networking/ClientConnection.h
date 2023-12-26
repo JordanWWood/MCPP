@@ -25,8 +25,8 @@ public:
     
 private:
     SPacketPayload ReadUnencryptedPacket(char* start, uint32_t& offset);
-    char* DecryptPacket(char* start);
-    char* EncryptPacket(char* start);
+    unsigned char* DecryptPacket(unsigned char* start, int length) const;
+    unsigned char* EncryptPacket(unsigned char* start, int length, int& outCipherLength) const;
     
     uint64_t m_clientSocket;
 
