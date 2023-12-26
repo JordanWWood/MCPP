@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "IPacket.h"
+#include "Common/Packets/IPacket.h"
 #include "Common/PacketPayload.h"
 
 struct SEncryptionRequest : public IPacket

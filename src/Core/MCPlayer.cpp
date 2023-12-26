@@ -3,16 +3,18 @@
 
 #include <random>
 
-#include "Common/Packets/Handshake.h"
+#include "Common/Packets/Handshake/Handshake.h"
 #include "Common/Packets/IPacket.h"
 #include "Common/PacketPayload.h"
 #include "Common/Encryption/IRSAKeyPair.h"
-#include "Common/Packets/EncryptionRequest.h"
-#include "Common/Packets/EncryptionResponse.h"
-#include "Common/Packets/LoginStart.h"
-#include "Common/Packets/StatusResponse.h"
+#include "Common/Packets/Login/EncryptionRequest.h"
+#include "Common/Packets/Login/EncryptionResponse.h"
+#include "Common/Packets/Login/LoginStart.h"
+#include "Common/Packets/Status/StatusResponse.h"
 
 #include "Common/IConnection.h"
+#include "Common/Packets/Login/LoginSuccess.h"
+#include "Common/Utils/uuid.h"
 
 // TODO do something better than this
 #define PROTOCOL_VERSION 765
@@ -26,8 +28,17 @@ void CMCPlayer::NetworkTick()
         MCLog::warn("Failure to recv packets needs to be implemented");
 
     // Update any running get request
-    for(CHTTPGet& request : m_runningGetRequest)
-        request.Update();
+    for(auto it = m_runningGetRequest.begin(); it != m_runningGetRequest.end();)
+    {
+        it->Update();
+        if(it->IsComplete())
+        {
+            it = m_runningGetRequest.erase(it);
+            continue;
+        }
+
+        ++it;
+    }
 }
 
 bool CMCPlayer::ProcessPacket(SPacketPayload&& payload)
@@ -132,9 +143,21 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
         url.append(digest);
         
         // TODO it'd be good to have something that explicitly handles curl requests along with updating them. This is nasty but I want to keep powering on with the login flow
-        CHTTPGet& request = m_runningGetRequest.emplace_back(CHTTPGet());
-        request.AddRequest(url, [](bool success, std::string body) {
+        CHTTPGet& request = m_runningGetRequest.emplace_back();
+        request.AddRequest(url, [this](bool success, std::string body) {
+            nlohmann::json jsonBody = nlohmann::json::parse(body);
 
+            std::string id;
+            jsonBody["id"].get_to(id);
+
+            std::string uuid = ConvertSlimToFullUUID(id);
+
+            SLoginSuccess request;
+            request.m_id = uuid;
+            request.m_username = GetUsername();
+
+            MCLog::debug("Sending LoginSuccess. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
+            m_pConnection->SendPacket(request.Serialize());
         });
 
         MCLog::debug("Queued authentication request. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());

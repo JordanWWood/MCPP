@@ -8,9 +8,8 @@
 #endif
 
 #include <openssl/bn.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/sha.h>
-#include <openssl/types.h>
 
 #include "Common/IPacketHandler.h"
 #include "Common/PacketPayload.h"
@@ -103,7 +102,11 @@ bool CClientConnection::SendPacket(SPacketPayload&& payload)
         iResult = send(m_clientSocket, payload.m_payload, payload.m_size, 0);
     else
     {
-        // TODO
+        int cipherLength = 0;
+        char* encryptedPacket = reinterpret_cast<char*>(EncryptPacket(reinterpret_cast<unsigned char*>(payload.m_payload), payload.m_size, cipherLength));
+
+        MCLog::debug("Sending encrypted packet. Raw[{}] Encrypted[{}]", std::string(payload.m_payload, payload.m_size), std::string(encryptedPacket, cipherLength));
+        iResult = send(m_clientSocket, encryptedPacket, cipherLength, 0);
     }
     
     if (iResult == SOCKET_ERROR)
@@ -155,11 +158,11 @@ unsigned char* CClientConnection::DecryptPacket(unsigned char* start, int length
 {
     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
     EVP_DecryptInit_ex(ctx, EVP_aes_256_cfb8(), nullptr, reinterpret_cast<const unsigned char*>(m_aesKey.c_str()),
-                       reinterpret_cast<const unsigned char*>(m_aesKey.c_str));
+                       reinterpret_cast<const unsigned char*>(m_aesKey.c_str()));
     
-    unsigned char* decryptedText = new unsigned char[length + EVP_MAX_BLOCK_LENGTH];
+    unsigned char* decryptedText = new unsigned char[length];
     int decryptedLength = 0;
-    if (EVP_DecryptUpdate(ctx, start, &length, decryptedText, decryptedLength) != 1) {
+    if (EVP_DecryptUpdate(ctx, start, &length, decryptedText, decryptedLength) <= 0) {
         MCLog::error("Error decrypting data");
         EVP_CIPHER_CTX_free(ctx);
         return nullptr;
@@ -179,12 +182,16 @@ unsigned char* CClientConnection::EncryptPacket(unsigned char* start, int length
                        reinterpret_cast<const unsigned char*>(m_aesKey.c_str()));
 
     unsigned char* cipherText = new unsigned char[length + EVP_MAX_BLOCK_LENGTH];
-    int cipherLength = 0;
-    if(EVP_EncryptUpdate(ctx, start, &length, cipherText, cipherLength) != 0)
+    int iResult = EVP_EncryptUpdate(ctx, cipherText, &outCipherLength, start, length);
+    if(iResult <= 0)
     {
-        MCLog::error("Error encrypting data");
-        EVP_CIPHER_CTX_free(ctx);
-        return nullptr;
+        uint64_t error = ERR_get_error();
+        if (error != 0)
+        {
+            MCLog::error("Error encrypting data. Code[{}]", error);
+            EVP_CIPHER_CTX_free(ctx);
+            return nullptr;
+        }
     }
 
     EVP_EncryptFinal_ex(ctx, start + length, &length);

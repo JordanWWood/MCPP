@@ -71,8 +71,8 @@ void CMCServer::NetworkRun()
 
                 // Network update
                 // 1 Accept new connections
-                if (IConnectionPtr pClient = m_pTcpServer->AcceptConnection())
-                    m_players.emplace_back(pClient, m_pKeyPair);
+                if (IConnectionPtr pConnection = m_pTcpServer->AcceptConnection())
+                    m_players.emplace_back(pConnection, m_pKeyPair);
 
                 // 2 Update current connections
                 // TODO move to own threads

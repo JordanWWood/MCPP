@@ -13,6 +13,14 @@ CHTTPGet::CHTTPGet(CHTTPGet&& other) noexcept
     m_activeRequests = std::move(other.m_activeRequests);
 }
 
+CHTTPGet& CHTTPGet::operator=(CHTTPGet&& other) noexcept
+{
+    m_multiHandle = std::move(other.m_multiHandle);
+    m_activeRequests = std::move(other.m_activeRequests);
+
+    return *this;
+}
+
 void CHTTPGet::Update()
 {
     OPTICK_EVENT();
@@ -29,7 +37,7 @@ void CHTTPGet::Update()
         const auto content_type = handler->get_info<CURLINFO_CONTENT_TYPE>();
         const auto http_code = handler->get_info<CURLINFO_HTTP_CODE>();
 
-        SActiveRequest& activeRequest = m_activeRequests[handler->get_curl()];
+        SActiveRequest& activeRequest = *m_activeRequests[handler->get_curl()];
         if (!activeRequest.m_easyStream->get_stream())
         {
             MCLog::error("Recieved message for a request that no longer seems to be valid. CurlPtr[{}]", handler->get_curl());
@@ -50,16 +58,14 @@ void CHTTPGet::AddRequest(const std::string& uri, std::function<void(bool, std::
 {
     OPTICK_EVENT();
 
-    auto *output_stream = new std::ostringstream;
-    curl::curl_ios<std::ostringstream>* curl_stream = new curl::curl_ios<std::ostringstream>(*output_stream);
+    auto *outputStream = new std::ostringstream;
+    std::unique_ptr<curl::curl_ios<std::ostringstream>> curlStream = std::make_unique<curl::curl_ios<std::ostringstream>>(*outputStream);
+    std::unique_ptr<curl::curl_easy> easy = std::make_unique<curl::curl_easy>(*curlStream.get());
     
-    curl::curl_easy* easy = new curl::curl_easy(*curl_stream);
-    const auto& [it, success] = m_activeRequests.emplace(easy->get_curl(), SActiveRequest());
-    it->second.m_easyStream = curl_stream;
-    it->second.m_handler = easy;
-    it->second.m_callback = std::move(callback);
+    const auto& [it, success] = m_activeRequests.emplace(easy->get_curl(), std::make_shared<SActiveRequest>());
+    it->second->m_callback = std::move(callback);
 
-    std::string& requestUri = it->second.m_requestUri;
+    std::string& requestUri = it->second->m_requestUri;
     requestUri = uri;
 
     easy->add<CURLOPT_URL>(requestUri.c_str());
@@ -67,16 +73,13 @@ void CHTTPGet::AddRequest(const std::string& uri, std::function<void(bool, std::
     easy->add<CURLOPT_SSL_VERIFYPEER>(0);
 
     m_multiHandle.add(*easy);
+
+    it->second->m_easyStream = std::move(curlStream);
+    it->second->m_handler = std::move(easy);
 }
 
 CHTTPGet::SActiveRequest::~SActiveRequest()
 {
     if(m_easyStream)
         delete m_easyStream->get_stream();
-    
-    delete m_easyStream;
-    m_easyStream = nullptr;
-
-    delete m_handler;
-    m_handler = nullptr;
 }
