@@ -156,6 +156,25 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
             request.m_id = uuid;
             request.m_username = GetUsername();
 
+            nlohmann::json props = jsonBody["properties"];
+            if(props.is_array())
+            {
+                for (int i = 0; i < props.size(); i++)
+                {
+                    nlohmann::json prop = props[i];
+                    SLoginSuccess::SProperty finalProp;
+                    prop["name"].get_to(finalProp.m_name);
+                    prop["value"].get_to(finalProp.m_value);
+                    if (prop.contains("signature"))
+                    {
+                        finalProp.m_signed = true;
+                        prop["signature"].get_to(finalProp.m_signature);
+                    }
+
+                    request.m_properties.push_back(finalProp);
+                }
+            }
+
             MCLog::debug("Sending LoginSuccess. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
             m_pConnection->SendPacket(request.Serialize());
         });

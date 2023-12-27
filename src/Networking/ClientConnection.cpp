@@ -65,6 +65,7 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
             else
             {
                 //TODO
+                MCLog::debug("Received encrypted packet. Content[{}]", recvBuffer);
             }
         } while (*start != 0);
         
