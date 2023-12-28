@@ -1,7 +1,7 @@
 
 *.exe
 
-obj/Win64/Debug/
+obj/
 
 .idea/
 
@@ -19,4 +19,6 @@ bin64/
 
 *.user
 
-bin/Win64/Debug/
+bin/
+
+Tools/
