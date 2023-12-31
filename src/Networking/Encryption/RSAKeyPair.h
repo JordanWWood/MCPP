@@ -1,8 +1,10 @@
 ﻿#pragma once
 #include <string>
-#include <openssl/types.h>
 
 #include "Common/Encryption/IRSAKeyPair.h"
+
+struct evp_pkey_st;
+typedef evp_pkey_st EVP_PKEY;
 
 class CRSAKeyPair : public IRSAKeyPair
 {
