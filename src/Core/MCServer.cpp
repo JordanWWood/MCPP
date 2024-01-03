@@ -3,9 +3,11 @@
 #include "MCServer.h"
 #include "MCPlayer.h"
 
-#include "Common/Packets/IPacket.h"
+#include "Packets/IPacket.h"
 
 #include <chrono>
+
+#include "ITCPServer.h"
 
 #define MAIN_THREAD_UPDATE_RATE 20
 #define NETWORK_THREAD_UPDATE_RATE 120
@@ -23,8 +25,8 @@ static void NetworkThread(CMCServer* mcServer)
     mcServer->NetworkRun();
 }
 
-CMCServer::CMCServer(uint16_t port)
-    : m_pTcpServer(std::make_unique<CTCPServer>(port))
+CMCServer::CMCServer(std::unique_ptr<ITCPServer> tcpServer)
+    : m_pTcpServer(std::move(tcpServer))
 {
 }
 

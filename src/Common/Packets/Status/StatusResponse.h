@@ -1,6 +1,6 @@
 ﻿#pragma once
-#include "Common/Packets/IPacket.h"
-#include "Common/PacketPayload.h"
+#include "Packets/IPacket.h"
+#include "PacketPayload.h"
 
 #include "nlohmann/json.hpp"
 

@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include <string>
 
-#include "Common/Encryption/IRSAKeyPair.h"
+#include "Encryption/IRSAKeyPair.h"
 
 struct evp_pkey_st;
 typedef evp_pkey_st EVP_PKEY;

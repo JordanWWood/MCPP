@@ -1,10 +1,11 @@
 ﻿#pragma once
 
+#include <cstdint>
 #include <memory>
 #include <string>
-#include <cstdint>
 
-#include <spdlog/spdlog.h>
 #include <optick.h>
+#include <spdlog/spdlog.h>
 
 namespace MCLog = ::spdlog;
+

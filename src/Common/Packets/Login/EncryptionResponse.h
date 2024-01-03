@@ -1,8 +1,8 @@
 ﻿#pragma once
 
-#include "Common/Packets/IPacket.h"
-#include "Common/PacketPayload.h"
-#include "Common/Encryption/IRSAKeyPair.h"
+#include "Packets/IPacket.h"
+#include "PacketPayload.h"
+#include "Encryption/IRSAKeyPair.h"
 
 struct SEncryptionResponse : public IPacket
 {

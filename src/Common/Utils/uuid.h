@@ -11,13 +11,13 @@ static std::string ConvertSlimToFullUUID(const std::string& uuid)
     std::string id;
     id.append(uuid.data(), uuid.data() + 8);
     id.append("-");
-    id.append(uuid.data() + 8 + 1, uuid.data() + 8 + 8);
+    id.append(uuid.data() + 8, uuid.data() + 8 + 4);
     id.append("-");
-    id.append(uuid.data() + 8 + 4 + 1, uuid.data() + 8 + 4 + 8);
+    id.append(uuid.data() + 8 + 4, uuid.data() + 8 + 4 + 4);
     id.append("-");
-    id.append(uuid.data() + 8 + 4 + 4 + 1, uuid.data() + 8 + 4 + 4 + 8);
+    id.append(uuid.data() + 8 + 4 + 4, uuid.data() + 8 + 4 + 4 + 4);
     id.append("-");
-    id.append(uuid.data() + 8 + 4 + 4 + 4 + 1, uuid.data() + 8 + 4 + 4 + 4 + 12);
+    id.append(uuid.data() + 8 + 4 + 4 + 4, uuid.data() + 8 + 4 + 4 + 4 + 12);
 
     return id;
 }

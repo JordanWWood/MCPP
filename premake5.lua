@@ -1,57 +1,15 @@
+include "dependencies.lua"
+
 workspace "MCPP"
     configurations { "Debug", "Release" }
     platforms { "Win32", "Win64", "Linux" }
-    
-project "MCPP"
-    kind "ConsoleApp"
-    language "C++"
-    targetdir "bin64/%{cfg.buildcfg}"
-    links { "OptickCore", "spdlog", "libcurl", "curlcpp" }
-	defines { "CURL_STATICLIB", "MT_INSTRUMENTED_BUILD" }
+
+group "MCPP"
+    include "src/Common"
+    include "src/Network"
+    include "src/Core"
+    include "src/Launcher"
 	
-	cppdialect "C++20"
-    
-	pchheader "pch.h"
-	pchsource "src/pch.cpp"
-	
-    includedirs { 
-        "src", 
-        "vendor/spdlog/include", 
-        "vendor/json/include", 
-        os.getenv("OPENSSL_INSTALL_DIR") .. "/include", 
-		"vendor/curl/include",
-        "vendor/curlcpp/include", 
-        "vendor/uuid",
-		"vendor/optick/src"
-    }
-
-    files { "src/**.h", "src/**.cpp" }
-
-    filter "configurations:Debug"
-        defines { "DEBUG", "USE_OPTICK=1" }
-        symbols "On"
-
-    filter "configurations:Release"
-        defines { "NDEBUG", "RELEASE" }
-        optimize "On"
-
-    filter { "platforms:Win64" }
-        system "windows"
-        architecture "x64"
-        toolset "msc"
-        links { 
-            "crypt32.lib", 
-            "ws2_32.lib", 
-            "wldap32.lib", 
-            os.getenv("OPENSSL_INSTALL_DIR") .. "/lib/libcrypto.lib",
-            os.getenv("OPENSSL_INSTALL_DIR") .. "/lib/libssl.lib"
-        }
-
-    filter { "platforms:Linux" }
-        system "linux"
-        architecture "x64"
-        toolset "gcc"
-		
 group "Libs"
     project "zlib"
     	kind "StaticLib"

@@ -1,6 +1,9 @@
 ﻿#pragma once
-#include "Common/Packets/IPacket.h"
-#include "Common/PacketPayload.h"
+
+#include "Packets/IPacket.h"
+#include "PacketPayload.h"
+
+#include <uuid_v4.h>
 
 struct SLoginSuccess : public IPacket
 {
@@ -9,9 +12,8 @@ struct SLoginSuccess : public IPacket
 
     virtual SPacketPayload Serialize() override
     {
-        const uint32_t packetIdSize = VarIntSize(2);
-        const uint32_t idLengthSize = VarIntSize(m_id.size());
-        const uint32_t idLength = m_id.size();
+        const uint32_t packetIdSize = VarIntSize(0x02);
+        const uint32_t idSize = 16;
         const uint32_t usernameLengthSize = VarIntSize(m_username.size());
         const uint32_t usernameLength = m_username.size();
         const uint32_t numPropertiesSize = VarIntSize(m_properties.size());
@@ -32,7 +34,7 @@ struct SLoginSuccess : public IPacket
             totalPropertySize += prop.m_signature.size();
         }
         
-        const uint32_t packetLength = packetIdSize + idLengthSize + idLength + usernameLengthSize + usernameLength + numPropertiesSize + totalPropertySize;
+        const uint32_t packetLength = packetIdSize + idSize + usernameLengthSize + usernameLength + numPropertiesSize + totalPropertySize;
         const uint32_t packetLengthSize = VarIntSize(packetLength);
         
         SPacketPayload payload;
@@ -40,12 +42,12 @@ struct SLoginSuccess : public IPacket
 
         uint32_t offset = 0;
         SerializeVarInt(payload.m_payload, packetLength, offset);
-        SerializeVarInt(payload.m_payload + offset, 2, offset);
+        SerializeVarInt(payload.m_payload + offset, 0x02, offset);
 
-        SerializeVarInt(payload.m_payload + offset, m_id.size(), offset);
-        memcpy(payload.m_payload + offset, m_id.c_str(), m_id.size());
-        offset += m_id.size();
-
+        std::string uuidBytes = m_id.bytes();
+        SerializeULong(payload.m_payload + offset, *(uint64_t*)(uuidBytes.c_str() + 8), offset);
+        SerializeULong(payload.m_payload + offset, *(uint64_t*)uuidBytes.c_str(), offset);
+        
         SerializeVarInt(payload.m_payload + offset, m_username.size(), offset);
         memcpy(payload.m_payload + offset, m_username.c_str(), m_username.size());
         offset += m_username.size();
@@ -62,7 +64,7 @@ struct SLoginSuccess : public IPacket
             memcpy(payload.m_payload + offset, prop.m_value.c_str(), prop.m_value.size());
             offset += prop.m_value.size();
             
-            memset(payload.m_payload + offset, 0x01, 1);
+            memset(payload.m_payload + offset, prop.m_signed, 1);
             offset += 1;
 
             SerializeVarInt(payload.m_payload + offset, prop.m_signature.size(), offset);
@@ -70,9 +72,9 @@ struct SLoginSuccess : public IPacket
             offset += prop.m_signature.size();
         }
         
-        payload.m_size = offset;
+        payload.m_size = offset - 1;
 
-        if (payload.m_size != (packetLength + packetLengthSize))
+        if (payload.m_size != (packetLength + packetLengthSize) - 1)
             MCLog::critical("Mismatched payload size. This can lead to memory corruption! FinalSize[{}] ExpectedSize[{}]", payload.m_size, packetLength + packetLengthSize);
         
         return payload;
@@ -86,7 +88,7 @@ struct SLoginSuccess : public IPacket
         std::string m_signature;
     };
 
-    std::string m_id;
+    UUIDv4::UUID m_id;
     std::string m_username;
     std::vector<SProperty> m_properties;
 };

@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <string>
 
+#include <endianness.h>
+
 #define SEGMENT_BITS 0x7F
 #define CONTINUE_BIT 0x80
 
@@ -27,6 +29,8 @@ struct IPacket
     // Serialization/Deserialization
     static uint16_t DeserializeShort(char* start, uint32_t& offset);
 
+    static void SerializeULong(char* start, uint64_t value, uint32_t& offset);
+
     static int32_t DeserializeVarInt(char* start, uint32_t& offset);
     static void SerializeVarInt(char* start, int32_t value, uint32_t& offset);
     static uint8_t VarIntSize(int32_t value);
@@ -37,9 +41,19 @@ struct IPacket
 inline uint16_t IPacket::DeserializeShort(char* start, uint32_t& offset)
 {
     offset += 2;
-
+    
     const uint16_t reverseInt = *reinterpret_cast<uint16_t*>(start);
-    return (reverseInt << 8) | ((reverseInt >> 8) & 0x00ff);
+    
+    // packets are encoded big endian. So we need to inert the result if the system is little endian
+    return betole16(reverseInt);
+}
+
+inline void IPacket::SerializeULong(char* start, uint64_t value, uint32_t& offset)
+{
+    offset += 8;
+
+    value = betole64(value);
+    memcpy(start, &value, 8);
 }
 
 inline int32_t IPacket::DeserializeVarInt(char* start, uint32_t& offset)

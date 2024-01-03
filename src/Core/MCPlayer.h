@@ -2,10 +2,9 @@
 
 #include <memory>
 #include <string>
-#include <nlohmann/json.hpp>
 
-#include "Common/IPacketHandler.h"
-#include "Common/HTTP/HTTPGet.h"
+#include "IPacketHandler.h"
+#include "HTTP/HTTPGet.h"
 
 struct IRSAKeyPair;
 enum class EClientState : uint8_t;
@@ -30,7 +29,6 @@ public:
     EClientState GetCurrentState() const { return m_state; }
 private:
     bool HandleHandshake(SPacketPayload&& payload);
-    nlohmann::json Debug_BlockingQueryMojang(const std::string& digest) const;
     bool HandleLogin(SPacketPayload&& payload);
     bool HandleStatus(SPacketPayload&& payload);
 

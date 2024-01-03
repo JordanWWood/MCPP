@@ -1,7 +1,7 @@
 ﻿#pragma once
 
-#include "Common/Packets/IPacket.h"
-#include "Common/PacketPayload.h"
+#include "Packets/IPacket.h"
+#include "PacketPayload.h"
 
 struct SEncryptionRequest : public IPacket
 {

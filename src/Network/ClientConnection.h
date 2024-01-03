@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "Common\IConnection.h"
+#include "IConnection.h"
 #include "SocketUtils.h"
 
 class CClientConnection : public IConnection

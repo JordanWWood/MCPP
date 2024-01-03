@@ -1,10 +1,12 @@
 
 #include "pch.h"
-#include "Core/MCServer.h"
+#include "MCServer.h"
 
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/async.h>
+
+#include "TCPServer.h"
 
 int main(int argc, char** argv)
 {
@@ -27,8 +29,9 @@ int main(int argc, char** argv)
 
     MCLog::info("Logger initialised");
 
+    std::unique_ptr<CTCPServer> tcpServer = std::make_unique<CTCPServer>(25565);
     // TODO make the port either a console arg or config option
-    CMCServer server(25565);
+    CMCServer server(std::move(tcpServer));
 
     if (server.Init())
     {

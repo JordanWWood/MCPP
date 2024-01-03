@@ -3,18 +3,18 @@
 
 #include <random>
 
-#include "Common/Packets/Handshake/Handshake.h"
-#include "Common/Packets/IPacket.h"
-#include "Common/PacketPayload.h"
-#include "Common/Encryption/IRSAKeyPair.h"
-#include "Common/Packets/Login/EncryptionRequest.h"
-#include "Common/Packets/Login/EncryptionResponse.h"
-#include "Common/Packets/Login/LoginStart.h"
-#include "Common/Packets/Status/StatusResponse.h"
+#include "PacketPayload.h"
+#include "Encryption/IRSAKeyPair.h"
+#include "Packets/IPacket.h"
+#include "Packets/Handshake/Handshake.h"
+#include "Packets/Login/EncryptionRequest.h"
+#include "Packets/Login/EncryptionResponse.h"
+#include "Packets/Login/LoginStart.h"
+#include "Packets/Status/StatusResponse.h"
 
-#include "Common/IConnection.h"
-#include "Common/Packets/Login/LoginSuccess.h"
-#include "Common/Utils/uuid.h"
+#include "IConnection.h"
+#include "HTTP/HTTPGet.h"
+#include "Packets/Login/LoginSuccess.h"
 
 // TODO do something better than this
 #define PROTOCOL_VERSION 765
@@ -141,6 +141,8 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
         url.append(GetUsername());
         url.append("&serverId=");
         url.append(digest);
+
+        // TODO send over the ip if we want to prevent proxy connections
         
         // TODO it'd be good to have something that explicitly handles curl requests along with updating them. This is nasty but I want to keep powering on with the login flow
         CHTTPGet& request = m_runningGetRequest.emplace_back();
@@ -150,10 +152,8 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
             std::string id;
             jsonBody["id"].get_to(id);
 
-            std::string uuid = ConvertSlimToFullUUID(id);
-
             SLoginSuccess request;
-            request.m_id = uuid;
+            request.m_id = UUIDv4::UUID::fromStrFactory(id);
             request.m_username = GetUsername();
 
             nlohmann::json props = jsonBody["properties"];
@@ -212,19 +212,19 @@ bool CMCPlayer::SendEncryptionRequest()
     SEncryptionRequest request;
     std::string publicKey = m_pServerKey->GetAsnDerKey();
         
-    request.m_publicKeyLength = publicKey.size();
+    request.m_publicKeyLength = static_cast<uint32_t>(publicKey.size());
     request.m_publicKey = std::move(publicKey);
 
     const std::string CHARACTERS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
     std::random_device random_device;
     std::mt19937 generator(random_device());
-    std::uniform_int_distribution<> distribution(0, CHARACTERS.size() - 1);
+    const std::uniform_int_distribution<> distribution(0, static_cast<int>(CHARACTERS.size()) - 1);
 
     for (std::size_t i = 0; i < 64; ++i)
         m_verifyToken += CHARACTERS[distribution(generator)];
 
-    request.m_verifyTokenLength = m_verifyToken.size();
+    request.m_verifyTokenLength = static_cast<uint32_t>(m_verifyToken.size());
     request.m_verifyToken = m_verifyToken;
     
     m_pConnection->SendPacket(request.Serialize());

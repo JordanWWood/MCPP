@@ -1,7 +1,5 @@
 ﻿#pragma once
-
-#include <curl_multi.h>
-#include <map>
+#include "curl_multi.h"
 
 using THTTPCallback = std::function<void(bool, std::string)>;
 

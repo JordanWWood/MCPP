@@ -1,8 +1,8 @@
 ﻿#pragma once
 #include <cstdint>
 
-#include "Common/Packets/IPacket.h"
-#include "Common/PacketPayload.h"
+#include "Packets/IPacket.h"
+#include "PacketPayload.h"
 
 struct SHandshake final : public IPacket
 {

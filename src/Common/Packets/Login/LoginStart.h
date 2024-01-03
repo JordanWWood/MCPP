@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "Common/Packets/IPacket.h"
+#include "Packets/IPacket.h"
 
 class LoginStart : public IPacket
 {
