@@ -1,12 +1,14 @@
 project "Core"
     kind "StaticLib"
     language "C++"
-    targetdir "%{wks.location}/bin64/%{cfg.buildcfg}"
+    targetdir "%{wks.location}/bin64/%{cfg.buildcfg}/libs"
     
     cppdialect "C++20"
     
     pchheader "pch.h"
     pchsource "pch.cpp"
+    
+    defines { "CURL_STATICLIB" }
     
     includedirs {
         "%{wks.location}/src/Common",

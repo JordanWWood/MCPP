@@ -20,7 +20,7 @@ group "Libs"
     	
     project "libcurl"
         kind "StaticLib"
-        targetdir "bin64/%{cfg.buildcfg}"
+        targetdir "bin64/%{cfg.buildcfg}/libs"
         language "C"
         includedirs { "vendor/curl/include", "vendor/curl/lib", os.getenv("OPENSSL_INSTALL_DIR") .. "/include" }
         defines { "BUILDING_LIBCURL", "CURL_STATICLIB", "USE_OPENSSL", "USE_IPV6" }
@@ -49,7 +49,7 @@ group "Libs"
     	
     project "spdlog"
     	kind "StaticLib"
-    	targetdir "bin64/%{cfg.buildcfg}"
+    	targetdir "bin64/%{cfg.buildcfg}/libs"
     	language "C++"
     	includedirs { "vendor/spdlog/include" }
     	defines { "SPDLOG_COMPILED_LIB" }

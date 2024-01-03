@@ -1,7 +1,7 @@
 ﻿project "Launcher"
     kind "ConsoleApp"
     language "C++"
-    targetdir "bin64/%{cfg.buildcfg}"
+    targetdir "%{wks.location}/bin64/%{cfg.buildcfg}"
     links { 
         "OptickCore", 
         "spdlog", 

@@ -1,7 +1,7 @@
 project "Network"
     kind "StaticLib"
     language "C++"
-    targetdir "%{wks.location}/bin64/%{cfg.buildcfg}"
+    targetdir "%{wks.location}/bin64/%{cfg.buildcfg}/libs"
     
     cppdialect "C++20"
         

@@ -22,3 +22,6 @@ bin64/
 bin/
 
 Tools/
+*.make
+
+Makefile
