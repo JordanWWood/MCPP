@@ -7,12 +7,11 @@
 
 #include <chrono>
 
+#include "IGlobalEnvironment.h"
 #include "ITCPServer.h"
 
-#define MAIN_THREAD_UPDATE_RATE 20
 #define NETWORK_THREAD_UPDATE_RATE 120
 
-using TMainThreadFrame = std::chrono::duration<int64_t, std::ratio<1, MAIN_THREAD_UPDATE_RATE>>;
 using TNetworkThreadFrame = std::chrono::duration<int64_t, std::ratio<1, NETWORK_THREAD_UPDATE_RATE>>;
 
 #define THREAD_UPDATE_BEGIN(frame) auto nextFrame = std::chrono::system_clock::now() + frame{1}
@@ -25,11 +24,6 @@ static void NetworkThread(CMCServer* mcServer)
     mcServer->NetworkRun();
 }
 
-CMCServer::CMCServer(std::unique_ptr<ITCPServer> tcpServer)
-    : m_pTcpServer(std::move(tcpServer))
-{
-}
-
 bool CMCServer::Init()
 {
     OPTICK_EVENT();
@@ -38,24 +32,22 @@ bool CMCServer::Init()
     m_networkThread = std::thread(NetworkThread, this);
 
     MCLog::info("Generating RSA key pair");
-    m_pKeyPair = m_pTcpServer->GenerateRSAKeyPair();
+    m_pKeyPair = IGlobalEnvironment::Get()->GetNetwork()->GetTCPServer()->GenerateRSAKeyPair();
     
     return true;
 }
 
 bool CMCServer::Run()
 {
-    THREAD_UPDATE_BEGIN(TMainThreadFrame);
-    OPTICK_FRAME("Main Thread");
-
-    THREAD_UPDATE_END();
-
+    OPTICK_EVENT();
+    
     return m_quit == false;
 }
 
+// TODO move this into Network.cpp
 void CMCServer::NetworkRun()
 {
-    m_quit = !m_pTcpServer->Listen();
+    m_quit = !IGlobalEnvironment::Get()->GetNetwork()->GetTCPServer()->Listen();
 
     while (!m_quit)
     {
@@ -65,7 +57,7 @@ void CMCServer::NetworkRun()
             OPTICK_EVENT("Network Update");
 
             // TODO we should reestablish the listen socket if it closes. For now the application just exits
-            if (m_pTcpServer->IsSocketClosed())
+            if (IGlobalEnvironment::Get()->GetNetwork()->GetTCPServer()->IsSocketClosed())
                 break;
 
             {
@@ -73,7 +65,7 @@ void CMCServer::NetworkRun()
 
                 // Network update
                 // 1 Accept new connections
-                if (IConnectionPtr pConnection = m_pTcpServer->AcceptConnection())
+                if (IConnectionPtr pConnection = IGlobalEnvironment::Get()->GetNetwork()->GetTCPServer()->AcceptConnection())
                     m_players.emplace_back(pConnection, m_pKeyPair);
 
                 // 2 Update current connections

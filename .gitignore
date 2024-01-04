@@ -25,3 +25,5 @@ Tools/
 *.make
 
 Makefile
+
+bin-int/

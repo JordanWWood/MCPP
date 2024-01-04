@@ -8,7 +8,9 @@
         "libcurl", 
         "curlcpp",
         "Network", 
-        "Core" 
+        "Core",
+        "System",
+        "Common"
     }
     
     defines { "CURL_STATICLIB", "MT_INSTRUMENTED_BUILD" }
@@ -22,12 +24,11 @@
     }
     
     includedirs {
-        "%{wks.location}/src/Core",
         "%{wks.location}/src/Common",
-        "%{wks.location}/src/Network"
+        "%{wks.location}/src/System"
     }
 
-    files { "**.h", "**.cpp", "*.lua" }
+    files { "**.h", "**.cpp" }
 
     filter "configurations:Debug"
         defines { "DEBUG", "USE_OPTICK=1" }

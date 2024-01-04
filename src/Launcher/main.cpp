@@ -1,15 +1,13 @@
 
 #include <pch.h>
 
-#include "MCServer.h"
-
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/async.h>
 #include <spdlog/spdlog.h>
 #include <optick.h>
 
-#include "TCPServer.h"
+#include "System.h"
 
 int main(int argc, char** argv)
 {
@@ -32,18 +30,12 @@ int main(int argc, char** argv)
 
     spdlog::info("Logger initialised");
 
-    std::unique_ptr<CTCPServer> tcpServer = std::make_unique<CTCPServer>(25565);
-    // TODO make the port either a console arg or config option
-    CMCServer server(std::move(tcpServer));
-
-    if (server.Init())
+    CSystem system;
+    if (system.Init())
     {
-        while(server.Run()) {}
-    }
-    else
-    {
-        spdlog::critical("Failed to initialise MCServer... Exiting");
+        return system.Run();
     }
     
-    return 0;
+    spdlog::critical("Failed to initialise System... Exiting");
+    return -1;
 }

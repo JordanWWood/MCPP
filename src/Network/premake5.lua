@@ -17,7 +17,7 @@ project "Network"
         "%{IncludeDir.uuid}"
     }
     
-    files { "**.h", "**.cpp", "*.lua" }
+    files { "**.h", "**.cpp" }
 		
 	filter "configurations:Debug"
         defines { "DEBUG", "USE_OPTICK=1" }

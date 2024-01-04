@@ -24,7 +24,7 @@ class CTCPServer final : public ITCPServer
 {
 public:
     CTCPServer(const uint16_t port);
-    ~CTCPServer();
+    ~CTCPServer() override;
 
     //////////////////////////////////////////////////
     // ITCPServer

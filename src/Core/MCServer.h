@@ -7,22 +7,20 @@
 #include <thread>
 #include <vector>
 
+#include "IServer.h"
 #include "MCPlayer.h"
 
 struct IRSAKeyPair;
 struct ITCPServer;
 
-class CMCServer
+class CMCServer : public IServer
 {
 public:
-    CMCServer(std::unique_ptr<ITCPServer> tcpServer);
-    
-    bool Init();
-    bool Run();
+    virtual bool Init() override;
+    virtual bool Run() override;
 
     void NetworkRun();
 private:
-    std::unique_ptr<ITCPServer> m_pTcpServer;
     std::vector<CMCPlayer> m_players;
 
     std::atomic<bool> m_quit;
