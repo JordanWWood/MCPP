@@ -1,23 +1,43 @@
 ﻿#include "pch.h"
 #include "AuthHash.h"
 
-#include <string_view>
 #include <openssl/bn.h>
+#include <openssl/sha.h>
 
-std::string SAuthHash::Finalise()
+SAuthHash::SAuthHash(): m_pCtx {}
+{
+    m_pCtx = EVP_MD_CTX_new();
+    m_pMd = EVP_sha1();
+
+    EVP_DigestInit_ex(m_pCtx, m_pMd, nullptr);
+}
+
+SAuthHash::~SAuthHash()
+{
+    EVP_MD_CTX_free(m_pCtx);
+}
+
+void SAuthHash::Update(std::string in) const
+{
+    EVP_DigestUpdate(m_pCtx, in.data(), in.size());
+}
+
+std::string SAuthHash::Finalise() const
 {
     OPTICK_EVENT();
 
     auto result = std::string();
 
-    auto buf = std::array< std::uint8_t, 20 >();
-    SHA1_Final(buf.data(), &ctx_);
+    unsigned char hash[SHA_DIGEST_LENGTH];
+    unsigned int hashLength;
+    
+    EVP_DigestFinal_ex(m_pCtx, hash, &hashLength);
 
     // convert has to bignum
-    BIGNUM *bn = BN_bin2bn(buf.data(), buf.size(), nullptr);
+    BIGNUM *bn = BN_bin2bn(hash, hashLength, nullptr);
 
     // reset the hasher for next use
-    SHA1_Init(&ctx_);
+    EVP_DigestInit_ex(m_pCtx, m_pMd, nullptr);
 
     // check for "negative" value
     if (BN_is_bit_set(bn, 159))
@@ -27,7 +47,7 @@ std::string SAuthHash::Finalise()
         // perform 1's compliment on the bignum's bits
         auto tmp = std::vector< unsigned char >(BN_num_bytes(bn));
         BN_bn2bin(bn, tmp.data());
-        std::transform(tmp.begin(), tmp.end(), tmp.begin(), [](unsigned char b) { return ~b; });
+        std::ranges::transform(tmp, tmp.begin(), [](unsigned char b) { return ~b; });
         BN_bin2bn(tmp.data(), tmp.size(), bn);
 
         // add 1 "as-if" 2's compliment
@@ -49,8 +69,8 @@ std::string SAuthHash::Finalise()
     BN_free(bn);
 
     // convert the hex to lower case
-    std::transform(result.begin(), result.end(), result.begin(),
-        [](unsigned char c){ return std::tolower(c); });
+    std::ranges::transform(result, result.begin(),
+                           [](unsigned char c){ return std::tolower(c); });
     
     return result;
 }

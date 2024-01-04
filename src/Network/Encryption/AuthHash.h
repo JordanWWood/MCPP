@@ -1,6 +1,7 @@
 ﻿#pragma once
 
-#include <openssl/sha.h>
+#include <openssl/evp.h>
+
 
 //
 // Copyright (c) 2020 Richard Hodges (hodges.r@gmail.com)
@@ -12,22 +13,19 @@
 
 struct SAuthHash
 {
-    SAuthHash()
-    : ctx_ {}
-    {
-        SHA1_Init(&ctx_);
-    }
-
+    SAuthHash();
+    ~SAuthHash();
+    
     SAuthHash(SAuthHash const &) = delete;
     SAuthHash(SAuthHash &&)      = delete;
     SAuthHash &operator=(SAuthHash const &) = delete;
     SAuthHash &operator=(SAuthHash &&) = delete;
-    ~SAuthHash() {}
+    
+    void Update(std::string in) const;
 
-    void Update(std::string in) { SHA1_Update(&ctx_, in.data(), in.size()); }
-
-    std::string Finalise();
+    std::string Finalise() const;
 
 private:
-    SHA_CTX ctx_;
+    EVP_MD_CTX* m_pCtx;
+    const EVP_MD* m_pMd;
 };
