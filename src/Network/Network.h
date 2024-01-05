@@ -16,10 +16,11 @@ public:
     ITCPServer* GetTCPServer() override { return &m_tcpServer; }
     
     void RegisterPacketHandler(std::weak_ptr<IPacketHandler> handlerWeakPtr) override;
-    void RegisterConnectionCallback(void* pCreator, std::function<void(IConnectionPtr pConnection)>&& functor) override;
+    void RegisterConnectionCallback(void* pCreator, std::function<void(const IConnectionPtr& pConnection)>&& functor) override;
     void UnregisterConnectionCallback(void* creator) override;
 
     std::shared_ptr<IRSAKeyPair> GetServerKeyPair() override { return m_pKeyPair; }
+    std::string GenerateHexDigest(std::string publicKey, std::string sharedSecret) override;
     // ~INetwork
     /////////////////////////////////////////////////////////////////////
     

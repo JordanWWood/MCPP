@@ -1,6 +1,7 @@
 ﻿#include "pch.h"
 #include "Network.h"
 
+#include "Encryption/AuthHash.h"
 #include "Encryption/RSAKeyPair.h"
 
 #define NETWORK_THREAD_UPDATE_RATE 120
@@ -8,7 +9,7 @@ using TNetworkThreadFrame = std::chrono::duration<int64_t, std::ratio<1, NETWORK
 
 static void NetworkThread(CNetwork* instance)
 {
-    OPTICK_THREAD("Network Thread")
+    OPTICK_THREAD("Network Thread");
     
     instance->NetworkTick();
 }
@@ -29,7 +30,7 @@ void CNetwork::RegisterPacketHandler(std::weak_ptr<IPacketHandler> handlerWeakPt
     m_packetHandlers.push_back(handlerWeakPtr);
 }
 
-void CNetwork::RegisterConnectionCallback(void* creator, std::function<void(IConnectionPtr pConnection)>&& functor)
+void CNetwork::RegisterConnectionCallback(void* creator, std::function<void(const IConnectionPtr& pConnection)>&& functor)
 {
     m_connectionCallbacks.emplace(creator, std::move(functor));
 }
@@ -37,6 +38,17 @@ void CNetwork::RegisterConnectionCallback(void* creator, std::function<void(ICon
 void CNetwork::UnregisterConnectionCallback(void* creator)
 {
     m_connectionCallbacks.erase(creator);
+}
+
+std::string CNetwork::GenerateHexDigest(std::string publicKey, std::string sharedSecret)
+{
+    OPTICK_EVENT();
+    
+    SAuthHash hasher;
+    hasher.Update(sharedSecret);
+    hasher.Update(publicKey);
+    
+    return hasher.Finalise();
 }
 
 void CNetwork::NetworkTick()

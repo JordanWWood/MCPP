@@ -15,6 +15,7 @@
 #include "PacketPayload.h"
 #include "Packets/IPacket.h"
 #include "Encryption/AuthHash.h"
+#include "spdlog/fmt/bin_to_hex.h"
 
 #define DEFAULT_BUFLEN 512
 
@@ -106,9 +107,9 @@ bool CClientConnection::SendPacket(SPacketPayload&& payload)
     else
     {
         int cipherLength = 0;
-        char* encryptedPacket = reinterpret_cast<char*>(EncryptPacket(reinterpret_cast<unsigned char*>(payload.m_payload), payload.m_size, cipherLength));
+        char* encryptedPacket = reinterpret_cast<char*>(m_secret->EncryptPacket(reinterpret_cast<unsigned char*>(payload.m_payload), payload.m_size, cipherLength));
 
-        MCLog::debug("Sending encrypted packet. Raw[{}] Encrypted[{}]", std::string(payload.m_payload, payload.m_size), std::string(encryptedPacket, cipherLength));
+        MCLog::debug("Sending encrypted packet. Raw[{}] Encrypted[{}]", spdlog::to_hex(payload.m_payload, payload.m_payload + payload.m_size), spdlog::to_hex(encryptedPacket, encryptedPacket + cipherLength));
         iResult = send(m_clientSocket, encryptedPacket, cipherLength, 0);
 
         delete[] encryptedPacket;
@@ -124,15 +125,6 @@ bool CClientConnection::SendPacket(SPacketPayload&& payload)
     }
     
     return false;
-}
-
-std::string CClientConnection::GenerateHexDigest(std::string publicKey, std::string sharedSecret)
-{
-    SAuthHash hasher;
-    hasher.Update(sharedSecret);
-    hasher.Update(publicKey);
-    
-    return hasher.Finalise();
 }
 
 SPacketPayload CClientConnection::ReadUnencryptedPacket(char* start, uint32_t& offset)
@@ -158,54 +150,4 @@ SPacketPayload CClientConnection::ReadUnencryptedPacket(char* start, uint32_t& o
     memmove(payload.m_payload, start, payloadSize + sizeOffset);
 
     return payload;
-}
-
-unsigned char* CClientConnection::DecryptPacket(unsigned char* start, int length) const
-{
-    OPTICK_EVENT();
-    
-    EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-    EVP_DecryptInit_ex(ctx, EVP_aes_128_cfb8(), nullptr, reinterpret_cast<const unsigned char*>(m_aesKey.c_str()),
-                       reinterpret_cast<const unsigned char*>(m_aesKey.c_str()));
-    
-    unsigned char* decryptedText = new unsigned char[length];
-    int decryptedLength = 0;
-    if (EVP_DecryptUpdate(ctx, decryptedText, &decryptedLength, start, length) <= 0) {
-        MCLog::error("Error decrypting data");
-        EVP_CIPHER_CTX_free(ctx);
-        return nullptr;
-    }
-
-    EVP_DecryptFinal_ex(ctx, start + length, &length);
-
-    EVP_CIPHER_CTX_free(ctx);
-    
-    return decryptedText;
-}
-
-unsigned char* CClientConnection::EncryptPacket(unsigned char* start, int length, int& outCipherLength) const
-{
-    OPTICK_EVENT();
-    
-    EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-    EVP_EncryptInit_ex(ctx, EVP_aes_128_cfb8(), nullptr, reinterpret_cast<const unsigned char*>(m_aesKey.c_str()),
-                       reinterpret_cast<const unsigned char*>(m_aesKey.c_str()));
-
-    unsigned char* cipherText = new unsigned char[length + EVP_MAX_BLOCK_LENGTH];
-    int iResult = EVP_EncryptUpdate(ctx, cipherText, &outCipherLength, start, length);
-    if(iResult <= 0)
-    {
-        uint64_t error = ERR_get_error();
-        if (error != 0)
-        {
-            MCLog::error("Error encrypting data. Code[{}]", error);
-            EVP_CIPHER_CTX_free(ctx);
-            return nullptr;
-        }
-    }
-
-    EVP_EncryptFinal_ex(ctx, start + length, &length);
-
-    EVP_CIPHER_CTX_free(ctx);
-    return cipherText;
 }

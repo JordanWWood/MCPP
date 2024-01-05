@@ -22,5 +22,4 @@ struct IConnection
     // Encryption/Authentication
     virtual void SetAESKey(std::string key) = 0;
     virtual void EnableEncryption() = 0;
-    virtual std::string GenerateHexDigest(std::string publicKey, std::string sharedSecret) = 0;
 };

@@ -137,7 +137,7 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
         MCLog::debug("Enabled encryption. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
         MCLog::debug("Beginning authentication with mojang. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
 
-        std::string digest = m_pConnection->GenerateHexDigest(pKey->GetAsnDerKey(), response.m_sharedSecret);
+        std::string digest = IGlobalEnvironment::Get()->GetNetwork()->GenerateHexDigest(pKey->GetAsnDerKey(), response.m_sharedSecret);
         MCLog::debug("Generated digest. Digest[{}] Address[{}] Username[{}]", digest, m_pConnection->GetRemoteAddress(), GetUsername());        
 
         std::string url("https://sessionserver.mojang.com/session/minecraft/hasJoined?username=");

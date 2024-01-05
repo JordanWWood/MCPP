@@ -16,7 +16,7 @@ bool CMCServer::Init()
 {
     OPTICK_EVENT();
 
-    IGlobalEnvironment::Get()->GetNetwork()->RegisterConnectionCallback(this, [this](IConnectionPtr pConnection) {
+    IGlobalEnvironment::Get()->GetNetwork()->RegisterConnectionCallback(this, [this](const IConnectionPtr& pConnection) {
         std::lock_guard lock(m_playerLock);
         const std::shared_ptr<CMCPlayer> pPlayer = m_players.emplace_back(std::make_shared<CMCPlayer>(pConnection));
         IGlobalEnvironment::Get()->GetNetwork()->RegisterPacketHandler(pPlayer);
