@@ -94,7 +94,7 @@ bool CTCPServer::Listen()
         return false;
     }
 
-    MCLog::info("Sucessfully started listening on {}", m_port);
+    MCLog::info("Successfully started listening on {}", m_port);
 
     m_listenSocketState = ESocketState::eSS_LISTEN;
 #endif
@@ -124,15 +124,4 @@ IConnectionPtr CTCPServer::AcceptConnection() const
     MCLog::info("Accepting connection from {}", inet_ntoa(sa.sin_addr));
     
     return std::make_shared<CClientConnection>(socket, inet_ntoa(sa.sin_addr));
-}
-
-std::shared_ptr<IRSAKeyPair> CTCPServer::GenerateRSAKeyPair()
-{
-    OPTICK_EVENT();
-
-    std::shared_ptr<IRSAKeyPair> pKey = std::make_shared<CRSAKeyPair>();
-    if(!pKey->Initialise())
-        return nullptr;
-
-    return pKey;
 }

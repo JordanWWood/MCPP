@@ -1,6 +1,4 @@
 
-#include <pch.h>
-
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/async.h>
@@ -14,7 +12,7 @@ int main(int argc, char** argv)
     OPTICK_THREAD("Main Thread");
 
     // Set up logging
-    spdlog::init_thread_pool(8192, 1);
+    spdlog::init_thread_pool(8192, 1, [](){ Optick::RegisterThread("Logger"); }, [](){ Optick::UnRegisterThread(false); });
     auto stdout_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
     auto rotating_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>("server.log", 1024 * 1024 * 10, 3);
     std::vector<spdlog::sink_ptr> sinks{ stdout_sink, rotating_sink };

@@ -32,8 +32,6 @@ public:
 
     virtual IConnectionPtr AcceptConnection() const override;
     virtual bool IsSocketClosed() const override { return m_listenSocketState == ESocketState::eSS_CLOSED; }
-
-    virtual std::shared_ptr<IRSAKeyPair> GenerateRSAKeyPair() override;
     // ~ITCPServer
     //////////////////////////////////////////////////
 private:

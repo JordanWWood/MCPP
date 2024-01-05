@@ -13,6 +13,7 @@
 #include "Packets/Status/StatusResponse.h"
 
 #include "IConnection.h"
+#include "IGlobalEnvironment.h"
 #include "HTTP/HTTPGet.h"
 #include "Packets/Login/LoginSuccess.h"
 
@@ -119,8 +120,10 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
     {
         MCLog::debug("Received encryption response. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
 
+        const std::shared_ptr<IRSAKeyPair> pKey = IGlobalEnvironment::Get()->GetNetwork()->GetServerKeyPair();
+        
         SEncryptionResponse response;
-        response.m_pServerKey = m_pServerKey;
+        response.m_pServerKey = pKey;
 
         response.Deserialize(payload.GetDeserializeStartPtr());
         MCLog::debug("Deserialized encryption response. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
@@ -134,7 +137,7 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
         MCLog::debug("Enabled encryption. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
         MCLog::debug("Beginning authentication with mojang. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
 
-        std::string digest = m_pConnection->GenerateHexDigest(m_pServerKey->GetAsnDerKey(), response.m_sharedSecret);
+        std::string digest = m_pConnection->GenerateHexDigest(pKey->GetAsnDerKey(), response.m_sharedSecret);
         MCLog::debug("Generated digest. Digest[{}] Address[{}] Username[{}]", digest, m_pConnection->GetRemoteAddress(), GetUsername());        
 
         std::string url("https://sessionserver.mojang.com/session/minecraft/hasJoined?username=");
@@ -210,7 +213,7 @@ bool CMCPlayer::SendEncryptionRequest()
     OPTICK_EVENT();
 
     SEncryptionRequest request;
-    std::string publicKey = m_pServerKey->GetAsnDerKey();
+    std::string publicKey = IGlobalEnvironment::Get()->GetNetwork()->GetServerKeyPair()->GetAsnDerKey();
         
     request.m_publicKeyLength = static_cast<uint32_t>(publicKey.size());
     request.m_publicKey = std::move(publicKey);

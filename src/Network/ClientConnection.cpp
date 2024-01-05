@@ -100,15 +100,14 @@ bool CClientConnection::SendPacket(SPacketPayload&& payload)
 {
     OPTICK_EVENT();
     
-    int iResult = 0;
+    int iResult;
     if(!m_encryptionEnabled)
         iResult = send(m_clientSocket, payload.m_payload, payload.m_size, 0);
     else
     {
         int cipherLength = 0;
         char* encryptedPacket = reinterpret_cast<char*>(EncryptPacket(reinterpret_cast<unsigned char*>(payload.m_payload), payload.m_size, cipherLength));
-        
-        //MCLog::debug("decryptedPacket[{}]", std::string(decryptedPacket, decryptedPacket + payload.m_size));
+
         MCLog::debug("Sending encrypted packet. Raw[{}] Encrypted[{}]", std::string(payload.m_payload, payload.m_size), std::string(encryptedPacket, cipherLength));
         iResult = send(m_clientSocket, encryptedPacket, cipherLength, 0);
 

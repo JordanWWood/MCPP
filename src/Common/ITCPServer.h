@@ -14,6 +14,4 @@ struct ITCPServer
 
     virtual IConnectionPtr AcceptConnection() const = 0;
     virtual bool IsSocketClosed() const = 0;
-
-    virtual std::shared_ptr<IRSAKeyPair> GenerateRSAKeyPair() = 0;
 };
