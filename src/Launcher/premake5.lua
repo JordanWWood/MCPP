@@ -2,6 +2,8 @@
     kind "ConsoleApp"
     language "C++"
     targetdir "%{wks.location}/bin64/%{cfg.buildcfg}"
+    objdir "%{wks.location}/obj/%{cfg.platform}_%{cfg.buildcfg}"
+    
     links { 
         "OptickCore", 
         "spdlog", 

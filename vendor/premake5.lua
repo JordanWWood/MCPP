@@ -1,6 +1,7 @@
 project "zlib"
 	kind "StaticLib"
 	targetdir "%{wks.location}/bin64/%{cfg.buildcfg}/libs"
+    objdir "%{wks.location}/obj/%{cfg.platform}_%{cfg.buildcfg}"
 	language "C"
 	
 	files {	"zlib/*.c", "zlib/*.h" }
@@ -21,6 +22,8 @@ project "libcurl"
 project "curlcpp"
     kind "StaticLib"
     targetdir "%{wks.location}/bin64/%{cfg.buildcfg}/libs"
+    objdir "%{wks.location}/obj/%{cfg.platform}_%{cfg.buildcfg}"
+    
     language "C++"
     includedirs { "curlcpp/include", "curl/include" }
     
@@ -37,6 +40,8 @@ project "curlcpp"
 project "spdlog"
 	kind "StaticLib"
 	targetdir "%{wks.location}/bin64/%{cfg.buildcfg}/libs"
+    objdir "%{wks.location}/obj/%{cfg.platform}_%{cfg.buildcfg}"
+	
 	language "C++"
 	includedirs { "spdlog/include" }
 	defines { "SPDLOG_COMPILED_LIB" }
@@ -46,6 +51,8 @@ project "spdlog"
 project "OptickCore"
 	kind "SharedLib"
 	targetdir "%{wks.location}/bin64/%{cfg.buildcfg}"
+    objdir "%{wks.location}/obj/%{cfg.platform}_%{cfg.buildcfg}"
+	
 	language "C++"
 	defines { "_CRT_SECURE_NO_WARNINGS", "OPTICK_LIB=1", "OPTICK_EXPORTS", "OPTICK_ENABLE_GPU_D3D12=0", "OPTICK_ENABLE_GPU_VULKAN=0" }
 

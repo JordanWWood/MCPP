@@ -3,6 +3,7 @@ include "dependencies.lua"
 workspace "MCPP"
     configurations { "Debug", "Release" }
     platforms { "Win32", "Win64", "Linux" }
+    startproject "Launcher"
 
 project "Premake"
 	kind "Utility"

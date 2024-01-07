@@ -2,6 +2,7 @@ project "Core"
     kind "StaticLib"
     language "C++"
     targetdir "%{wks.location}/bin64/%{cfg.buildcfg}/libs"
+    objdir "%{wks.location}/obj/%{cfg.platform}_%{cfg.buildcfg}"
     
     cppdialect "C++20"
     
