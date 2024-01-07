@@ -4,6 +4,7 @@ workspace "MCPP"
     configurations { "Debug", "Release" }
     platforms { "Win32", "Win64", "Linux" }
     startproject "Launcher"
+    defaultplatform ("Win64")
 
 project "Premake"
 	kind "Utility"
