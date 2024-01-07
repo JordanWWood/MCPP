@@ -7,18 +7,15 @@ project "Core"
     
     pchheader "pch.h"
     pchsource "pch.cpp"
-    
-    defines { "CURL_STATICLIB" }
-    
+
     includedirs {
         "%{wks.location}/src/Common",
         "%{wks.location}/src/Core",
         "%{IncludeDir.spdlog}",
-        "%{IncludeDir.curl}",
-        "%{IncludeDir.curlcpp}", 
         "%{IncludeDir.uuid}",
         "%{IncludeDir.optick}",
-        "%{IncludeDir.json}"
+        "%{IncludeDir.json}",
+        "%{IncludeDir.concurrentqueues}"
     }
     
     files { "**.h", "**.cpp" }

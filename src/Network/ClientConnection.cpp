@@ -1,21 +1,17 @@
 #include "pch.h"
 #include "ClientConnection.h"
 
+#include "IPacketHandler.h"
+#include "PacketPayload.h"
+#include "Packets/IPacket.h"
+#include "spdlog/fmt/bin_to_hex.h"
+
 #include <vector>
+#include <openssl/err.h>
 
 #ifdef _WIN32
 #include <WinSock2.h>
 #endif
-
-#include <openssl/bn.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-
-#include "IPacketHandler.h"
-#include "PacketPayload.h"
-#include "Packets/IPacket.h"
-#include "Encryption/AuthHash.h"
-#include "spdlog/fmt/bin_to_hex.h"
 
 #define DEFAULT_BUFLEN 512
 
@@ -97,31 +93,41 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
     return false;
 }
 
-bool CClientConnection::SendPacket(SPacketPayload&& payload)
+void CClientConnection::QueuePacket(SPacketPayload&& payload)
+{
+    OPTICK_EVENT();
+    m_queuedSends.enqueue(std::move(payload));
+}
+
+bool CClientConnection::SendQueuedPackets()
 {
     OPTICK_EVENT();
     
-    int iResult;
-    if(!m_encryptionEnabled)
-        iResult = send(m_clientSocket, payload.m_payload, payload.m_size, 0);
-    else
+    SPacketPayload payload;
+    while(m_queuedSends.try_dequeue(payload))
     {
-        int cipherLength = 0;
-        char* encryptedPacket = reinterpret_cast<char*>(m_secret->EncryptPacket(reinterpret_cast<unsigned char*>(payload.m_payload), payload.m_size, cipherLength));
+        int iResult;
+        if(!m_encryptionEnabled)
+            iResult = send(m_clientSocket, payload.m_payload, payload.m_size, 0);
+        else
+        {
+            int cipherLength = 0;
+            char* encryptedPacket = reinterpret_cast<char*>(m_secret->EncryptPacket(reinterpret_cast<unsigned char*>(payload.m_payload), payload.m_size, cipherLength));
 
-        MCLog::debug("Sending encrypted packet. Raw[{}] Encrypted[{}]", spdlog::to_hex(payload.m_payload, payload.m_payload + payload.m_size), spdlog::to_hex(encryptedPacket, encryptedPacket + cipherLength));
-        iResult = send(m_clientSocket, encryptedPacket, cipherLength, 0);
+            MCLog::debug("Sending encrypted packet. Raw[{}] Encrypted[{}]", spdlog::to_hex(payload.m_payload, payload.m_payload + payload.m_size), spdlog::to_hex(encryptedPacket, encryptedPacket + cipherLength));
+            iResult = send(m_clientSocket, encryptedPacket, cipherLength, 0);
 
-        delete[] encryptedPacket;
-    }
+            delete[] encryptedPacket;
+        }
     
-    if (iResult == SOCKET_ERROR)
-    {
-        MCLog::error("Failed to send payload to client. Error[{}] Address[{}]", WSAGetLastError(), GetRemoteAddress());
+        if (iResult == SOCKET_ERROR)
+        {
+            MCLog::error("Failed to send payload to client. Error[{}] Address[{}]", WSAGetLastError(), GetRemoteAddress());
 
-        m_socketState = ESocketState::eSS_CLOSED;
-        closesocket(m_clientSocket);
-        return false;
+            m_socketState = ESocketState::eSS_CLOSED;
+            closesocket(m_clientSocket);
+            return false;
+        }
     }
     
     return false;
@@ -131,7 +137,6 @@ SPacketPayload CClientConnection::ReadUnencryptedPacket(char* start, uint32_t& o
 {
     OPTICK_EVENT()
     
-    // We take one away from the payload size since we read the packet id out immediately
     const uint32_t payloadSize = IPacket::DeserializeVarInt(start, offset);
     const uint32_t sizeOffset = offset;
             

@@ -10,7 +10,7 @@ project "Premake"
 	targetdir ("%{wks.location}/bin64/%{cfg.buildcfg}/%{prj.name}")
 
 	files {
-		"%{wks.location}/**premake5.lua"
+		"%{wks.location}/**.lua"
 	}
 
 	postbuildmessage "Regenerating project files with Premake5!"

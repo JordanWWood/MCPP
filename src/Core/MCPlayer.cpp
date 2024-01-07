@@ -14,7 +14,6 @@
 
 #include "IConnection.h"
 #include "IGlobalEnvironment.h"
-#include "HTTP/HTTPGet.h"
 #include "Packets/Login/LoginSuccess.h"
 
 // TODO do something better than this
@@ -27,19 +26,6 @@ void CMCPlayer::NetworkTick()
     bool success = m_pConnection->RecvPackets(this);
     if(!success)
         MCLog::warn("Failure to recv packets needs to be implemented");
-
-    // Update any running get request
-    for(auto it = m_runningGetRequest.begin(); it != m_runningGetRequest.end();)
-    {
-        it->Update();
-        if(it->IsComplete())
-        {
-            it = m_runningGetRequest.erase(it);
-            continue;
-        }
-
-        ++it;
-    }
 }
 
 bool CMCPlayer::ProcessPacket(SPacketPayload&& payload)
@@ -146,10 +132,10 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
         url.append(digest);
 
         // TODO send over the ip if we want to prevent proxy connections
-        
-        // TODO it'd be good to have something that explicitly handles curl requests along with updating them. This is nasty but I want to keep powering on with the login flow
-        CHTTPGet& request = m_runningGetRequest.emplace_back();
-        request.AddRequest(url, [this](bool success, std::string body) {
+
+        IGlobalEnvironment::Get()->GetCurl()->QueueHttpGet(url, [this](bool success, std::string body) {
+            OPTICK_EVENT();
+
             nlohmann::json jsonBody = nlohmann::json::parse(body);
 
             std::string id;
@@ -179,7 +165,7 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
             }
 
             MCLog::debug("Sending LoginSuccess. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
-            m_pConnection->SendPacket(request.Serialize());
+            m_pConnection->QueuePacket(request.Serialize());
         });
 
         MCLog::debug("Queued authentication request. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
@@ -197,13 +183,13 @@ bool CMCPlayer::HandleStatus(SPacketPayload&& payload)
     if(payload.m_packetId == 0)
     {
         SStatusResponse response;
-        m_pConnection->SendPacket(response.Serialize());
+        m_pConnection->QueuePacket(response.Serialize());
     }
 
     if(payload.m_packetId == 1)
     {
         payload.m_size = payload.m_size + 2;
-        m_pConnection->SendPacket(std::move(payload));
+        m_pConnection->QueuePacket(std::move(payload));
     }
     return true;
 }
@@ -230,7 +216,7 @@ bool CMCPlayer::SendEncryptionRequest()
     request.m_verifyTokenLength = static_cast<uint32_t>(m_verifyToken.size());
     request.m_verifyToken = m_verifyToken;
     
-    m_pConnection->SendPacket(request.Serialize());
+    m_pConnection->QueuePacket(request.Serialize());
 
     return true;
 }

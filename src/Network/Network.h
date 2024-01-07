@@ -10,6 +10,7 @@ class CNetwork final : public INetwork
 {
 public:
     CNetwork();
+    ~CNetwork();
 
     /////////////////////////////////////////////////////////////////////
     // INetwork
@@ -29,12 +30,13 @@ public:
 private:
     CTCPServer m_tcpServer;
 
+    std::vector<IConnectionPtr> m_activeConnections;
     std::vector<std::weak_ptr<IPacketHandler>> m_packetHandlers;
     std::thread m_networkThread;
     std::mutex m_networkLock;
     
     std::map<void*, std::function<void(IConnectionPtr pConnection)>> m_connectionCallbacks;
-    std::atomic_bool m_quit = false;
+    std::atomic_bool m_shutdown = false;
 
     std::shared_ptr<IRSAKeyPair> m_pKeyPair;
 };

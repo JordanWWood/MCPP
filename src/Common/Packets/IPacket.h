@@ -40,6 +40,8 @@ struct IPacket
 
 inline uint16_t IPacket::DeserializeShort(char* start, uint32_t& offset)
 {
+    OPTICK_EVENT();
+    
     offset += 2;
     
     const uint16_t reverseInt = *reinterpret_cast<uint16_t*>(start);
@@ -50,6 +52,8 @@ inline uint16_t IPacket::DeserializeShort(char* start, uint32_t& offset)
 
 inline void IPacket::SerializeULong(char* start, uint64_t value, uint32_t& offset)
 {
+    OPTICK_EVENT();
+    
     offset += 8;
 
     value = betole64(value);
@@ -58,6 +62,8 @@ inline void IPacket::SerializeULong(char* start, uint64_t value, uint32_t& offse
 
 inline int32_t IPacket::DeserializeVarInt(char* start, uint32_t& offset)
 {
+    OPTICK_EVENT();
+    
     int32_t value = 0;
     int position = 0;
 
@@ -80,6 +86,8 @@ inline int32_t IPacket::DeserializeVarInt(char* start, uint32_t& offset)
 
 inline void IPacket::SerializeVarInt(char* start, int32_t value, uint32_t& offset)
 {
+    OPTICK_EVENT();
+    
     const uint32_t startOffset = offset;
     while (true) {
         const uint32_t position = offset - startOffset;
@@ -98,6 +106,8 @@ inline void IPacket::SerializeVarInt(char* start, int32_t value, uint32_t& offse
 
 inline uint8_t IPacket::VarIntSize(int32_t value)
 {
+    OPTICK_EVENT();
+    
     uint32_t size = 0;
     while (true) {
         size++;
@@ -112,6 +122,8 @@ inline uint8_t IPacket::VarIntSize(int32_t value)
 
 inline std::string IPacket::DeserializeString(char* start, uint32_t maxSize, uint32_t& offset)
 {
+    OPTICK_EVENT();
+    
     if(maxSize >= MAX_STRING_LENGTH)
         return "";
 

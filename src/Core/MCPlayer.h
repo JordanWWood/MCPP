@@ -4,7 +4,6 @@
 #include <string>
 
 #include "IPacketHandler.h"
-#include "HTTP/HTTPGet.h"
 
 struct IRSAKeyPair;
 enum class EClientState : uint8_t;
@@ -39,8 +38,6 @@ private:
     
     IConnectionPtr m_pConnection{ nullptr };
     EClientState m_state { static_cast<EClientState>(0) };
-
-    std::vector<CHTTPGet> m_runningGetRequest;
-
+    
     std::string m_verifyToken;
 };

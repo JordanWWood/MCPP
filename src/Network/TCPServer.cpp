@@ -24,8 +24,8 @@ bool CTCPServer::Listen()
     WSADATA wsaData;
     int iResult;
 
-    struct addrinfo *result = nullptr;
-    struct addrinfo hints;
+    addrinfo *result = nullptr;
+    addrinfo hints;
 
     iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
     if(iResult != 0)
@@ -106,7 +106,7 @@ IConnectionPtr CTCPServer::AcceptConnection() const
 {
     OPTICK_EVENT();
 
-    struct sockaddr_in sa = { 0 }; /* for TCP/IP */
+    sockaddr_in sa = { 0 }; /* for TCP/IP */
     socklen_t socklen = sizeof sa;
 
     SOCKET socket = accept(m_listenSocket, reinterpret_cast<struct sockaddr*>(&sa), &socklen);

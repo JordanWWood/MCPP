@@ -19,6 +19,7 @@ SAuthHash::~SAuthHash()
 
 void SAuthHash::Update(std::string in) const
 {
+    OPTICK_EVENT();
     EVP_DigestUpdate(m_pCtx, in.data(), in.size());
 }
 

@@ -1,6 +1,8 @@
 ﻿#include "pch.h"
 #include "Network.h"
 
+#include "ClientConnection.h"
+#include "IConnection.h"
 #include "Encryption/AuthHash.h"
 #include "Encryption/RSAKeyPair.h"
 
@@ -22,6 +24,14 @@ CNetwork::CNetwork()
     MCLog::info("Generating RSA key pair");
     m_pKeyPair = std::make_shared<CRSAKeyPair>();
     m_pKeyPair->Initialise();
+}
+
+CNetwork::~CNetwork()
+{
+    m_shutdown = true;
+
+    // Wait for the network thread to exit
+    m_networkThread.join();
 }
 
 void CNetwork::RegisterPacketHandler(std::weak_ptr<IPacketHandler> handlerWeakPtr)
@@ -53,10 +63,10 @@ std::string CNetwork::GenerateHexDigest(std::string publicKey, std::string share
 
 void CNetwork::NetworkTick()
 {
-    m_quit = !m_tcpServer.Listen();
+    m_shutdown = !m_tcpServer.Listen();
 
     auto nextFrame = std::chrono::high_resolution_clock::now() + TNetworkThreadFrame{1};
-    while (!m_quit)
+    while (!m_shutdown)
     {
         {
             OPTICK_EVENT("Network Update");
@@ -74,10 +84,12 @@ void CNetwork::NetworkTick()
             {
                 for (auto& callback : m_connectionCallbacks)
                     callback.second(pConnection);
+
+                m_activeConnections.push_back(pConnection);
             }
          
             // 2 Update current connections
-            // TODO move to own threads
+            // TODO I'm not a fan of this packet handler pattern. An alternative would be ideal. Perhaps a map of handlers for connections?
             for (std::vector<std::weak_ptr<IPacketHandler>>::iterator it = m_packetHandlers.begin(); it != m_packetHandlers.end();)
             {
                 std::shared_ptr<IPacketHandler> pHandler = it->lock();
@@ -94,6 +106,30 @@ void CNetwork::NetworkTick()
                 pHandler->NetworkTick();
                 ++it;
             }
+
+            // 3 Send packets if the main thread frame has ended
+            //   Also remove any stale connections
+            for (std::vector<IConnectionPtr>::iterator it = m_activeConnections.begin(); it != m_activeConnections.end();)
+            {
+                const IConnectionPtr& pConnection = *it;
+                if(pConnection->IsSocketClosed())
+                {
+                    it = m_activeConnections.erase(it);
+                    continue;
+                }
+
+                switch (pConnection->GetConnectionType())
+                {
+                case EConnectionType::eCT_Client: {
+                        CClientConnection* pClientConnection = dynamic_cast<CClientConnection*>(pConnection.get());
+                        pClientConnection->SendQueuedPackets();
+                    } break;
+                case EConnectionType::eCT_Server:
+                    break;
+                }
+
+                ++it;
+            }
         }
         
         {
@@ -102,6 +138,4 @@ void CNetwork::NetworkTick()
             nextFrame += TNetworkThreadFrame{1};
         }
     }
-
-    m_quit = true;
 }

@@ -64,6 +64,8 @@ bool CRSAKeyPair::Initialise()
 
 std::string CRSAKeyPair::Encrypt(std::string& input) const
 {
+    OPTICK_EVENT();
+    
     // Convert string to unsigned char buffer
     const unsigned char* inputData = reinterpret_cast<const unsigned char*>(input.c_str());
     size_t inputLength = input.length();
@@ -114,6 +116,8 @@ std::string CRSAKeyPair::Encrypt(std::string& input) const
 
 std::string CRSAKeyPair::Decrypt(std::string& input) const
 {
+    OPTICK_EVENT();
+    
     // Convert string to unsigned char buffer
     const unsigned char* inputData = reinterpret_cast<const unsigned char*>(input.c_str());
     size_t inputLength = input.length();

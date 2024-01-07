@@ -7,6 +7,7 @@ IncludeDir["uuid"] = "%{wks.location}/vendor/uuid"
 IncludeDir["zlib"] = "%{wks.location}/vendor/zlib"
 IncludeDir["openssl"] = os.getenv("OPENSSL_INSTALL_DIR") .. "/include"
 IncludeDir["json"] = "%{wks.location}/vendor/json/include"
+IncludeDir["concurrentqueues"] = "%{wks.location}/vendor/concurrentqueues"
 
 LibraryDir = {}
 LibraryDir["openssl"] = os.getenv("OPENSSL_INSTALL_DIR") .. "/lib"

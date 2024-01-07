@@ -15,7 +15,7 @@ public:
     virtual SPacketPayload Serialize() override
     {
         // TODO once we get to proxying we'll want to be able to serialize all packets
-        return SPacketPayload();
+        return {};
     }
 
     std::string m_username;

@@ -19,3 +19,6 @@
 [submodule "vendor/optick"]
 	path = vendor/optick
 	url = https://github.com/bombomby/optick.git
+[submodule "vendor/concurrentqueues"]
+	path = vendor/concurrentqueues
+	url = https://github.com/cameron314/concurrentqueue.git

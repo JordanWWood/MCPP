@@ -8,13 +8,18 @@ project "Network"
     pchheader "pch.h"
     pchsource "pch.cpp"
     
+    defines { "CURL_STATICLIB" }
+    
     includedirs {
         "../Common",
         "../Network",
         "%{IncludeDir.spdlog}",
         "%{IncludeDir.optick}",
         "%{IncludeDir.openssl}",
-        "%{IncludeDir.uuid}"
+        "%{IncludeDir.uuid}",
+        "%{IncludeDir.curl}",
+        "%{IncludeDir.curlcpp}",
+        "%{IncludeDir.concurrentqueues}"
     }
     
     files { "**.h", "**.cpp" }

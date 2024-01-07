@@ -22,7 +22,7 @@ struct SEncryptionResponse : public IPacket
     // In theory we'll never need to Serialize this packet
     virtual SPacketPayload Serialize() override
     {
-        return SPacketPayload();
+        return {};
     }
 
     std::shared_ptr<IRSAKeyPair> m_pServerKey { nullptr };

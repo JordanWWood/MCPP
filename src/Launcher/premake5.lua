@@ -16,16 +16,13 @@
     defines { "CURL_STATICLIB", "MT_INSTRUMENTED_BUILD" }
     cppdialect "C++20"
     
-    includedirs { 
+    includedirs {
+        "%{wks.location}/src/Common",
+        "%{wks.location}/src/System",
         "%{IncludeDir.spdlog}",
         "%{IncludeDir.optick}",
         "%{IncludeDir.curlcpp}",
         "%{IncludeDir.curl}"
-    }
-    
-    includedirs {
-        "%{wks.location}/src/Common",
-        "%{wks.location}/src/System"
     }
 
     files { "**.h", "**.cpp" }

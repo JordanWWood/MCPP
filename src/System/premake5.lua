@@ -8,6 +8,8 @@
     pchheader "pch.h"
     pchsource "pch.cpp"
     
+    defines { "CURL_STATICLIB" }
+    
     includedirs {
         "../System",
         "../Common",
@@ -16,7 +18,8 @@
         "%{IncludeDir.spdlog}",
         "%{IncludeDir.optick}",
         "%{IncludeDir.curl}",
-        "%{IncludeDir.curlcpp}"
+        "%{IncludeDir.curlcpp}",
+        "%{IncludeDir.concurrentqueues}"
     }
     
     files { "**.h", "**.cpp" }

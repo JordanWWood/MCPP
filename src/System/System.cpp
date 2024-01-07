@@ -1,6 +1,8 @@
 ﻿#include "pch.h"
 
 #include "System.h"
+
+#include "CurlProcessor.h"
 #include "MCServer.h"
 #include "Network.h"
 
@@ -11,6 +13,9 @@ bool CSystem::Init()
 {
     m_pNetwork = std::make_unique<CNetwork>();
     m_globalEnvironment.SetNetwork(m_pNetwork.get());
+
+    m_pCurlProcessor = std::make_unique<CCurlProcessor>();
+    m_globalEnvironment.SetCurl(m_pCurlProcessor.get());
 
     m_pServer = std::make_unique<CMCServer>();
     return m_pServer->Init();
