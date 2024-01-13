@@ -14,6 +14,8 @@ struct SEncryptionRequest : public IPacket
     
     virtual SPacketPayload Serialize() override
     {
+        OPTICK_EVENT();
+        
         const uint8_t packetIdSize = VarIntSize(1);
         const uint32_t serverIdSize = VarIntSize(m_serverId.size());
         const uint8_t keyLengthSize = VarIntSize(m_publicKeyLength);

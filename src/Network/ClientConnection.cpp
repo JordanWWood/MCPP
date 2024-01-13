@@ -27,13 +27,20 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
 
     char recvBuffer[DEFAULT_BUFLEN];
     constexpr int recvBufferLength{ DEFAULT_BUFLEN };
-
     memset(&recvBuffer, 0, recvBufferLength);
     
     const int iResult = recv(m_clientSocket, recvBuffer, recvBufferLength, 0);
     if (iResult > 0)
     {
-        char* start = recvBuffer;
+        char* m_decryptedBuffer = nullptr;
+        char* start;
+        if (m_encryptionEnabled)
+        {
+            m_decryptedBuffer = reinterpret_cast<char*>(m_secret->DecryptPacket(reinterpret_cast<unsigned char*>(recvBuffer), recvBufferLength));
+            start = m_decryptedBuffer;
+        }
+        else
+            start = recvBuffer;
 
         std::vector<SPacketPayload> payloads;
 
@@ -41,28 +48,21 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
         do
         {
             uint32_t offset = 0;
-            if (!m_encryptionEnabled)
+            SPacketPayload payload = ReadUnencryptedPacket(start, offset);
+            
+            // Shift the start to the beginning of what would be the next packet
+            start = start + (payload.m_size + offset);
+            uint32_t packetId = payload.m_packetId;
+            
+            const bool result = pHandler->ProcessPacket(std::move(payload));
+            if (!result)
             {
-                SPacketPayload payload = ReadUnencryptedPacket(start, offset);
-
-                // Shift the start to the beginning of what would be the next packet
-                start = start + (payload.m_size + offset);
-
-                uint32_t packetId = payload.m_packetId;
-                const bool result = pHandler->ProcessPacket(std::move(payload));
-                if (!result)
-                {
-                    MCLog::warn("Error processing packet. Disconnecting connection. PacketId[{}] Address[{}]", packetId, GetRemoteAddress().c_str());
-                
-                    closesocket(m_clientSocket);
-                    m_socketState = ESocketState::eSS_CLOSED;
-                    m_clientSocket = INVALID_SOCKET;
-                }
-            }
-            else
-            {
-                //TODO
-                MCLog::debug("Received encrypted packet. Content[{}]", recvBuffer);
+                MCLog::warn("Error processing packet. Disconnecting connection. PacketId[{}] Address[{}]", packetId, GetRemoteAddress().c_str());
+               
+                closesocket(m_clientSocket);
+                m_socketState = ESocketState::eSS_CLOSED;
+                m_clientSocket = INVALID_SOCKET;
+                break;
             }
         } while (*start != 0);
         
@@ -113,10 +113,7 @@ bool CClientConnection::SendQueuedPackets()
         {
             int cipherLength = 0;
             char* encryptedPacket = reinterpret_cast<char*>(m_secret->EncryptPacket(reinterpret_cast<unsigned char*>(payload.m_payload), payload.m_size, cipherLength));
-
-            MCLog::debug("Sending encrypted packet. Raw[{}] Encrypted[{}]", spdlog::to_hex(std::string(payload.m_payload, payload.m_size)), spdlog::to_hex(std::string(encryptedPacket, cipherLength)));
             iResult = send(m_clientSocket, encryptedPacket, cipherLength, 0);
-
             delete[] encryptedPacket;
         }
     

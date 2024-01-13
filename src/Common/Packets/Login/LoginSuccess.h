@@ -11,6 +11,8 @@ struct SLoginSuccess : public IPacket
 
     virtual SPacketPayload Serialize() override
     {
+        OPTICK_EVENT();
+        
         const uint32_t packetIdSize = VarIntSize(0x02);
         const uint32_t idSize = 16;
         const uint32_t usernameLengthSize = VarIntSize(m_username.size());
@@ -26,7 +28,6 @@ struct SLoginSuccess : public IPacket
             totalPropertySize += VarIntSize(prop.m_value.size());
             totalPropertySize += prop.m_value.size();
 
-            // signed
             totalPropertySize += 1;
 
             totalPropertySize += VarIntSize(prop.m_signature.size());
@@ -71,7 +72,7 @@ struct SLoginSuccess : public IPacket
             offset += prop.m_signature.size();
         }
         
-        payload.m_size = offset - 1;
+        payload.m_size = offset;
 
         if (payload.m_size != (packetLength + packetLengthSize) - 1)
             MCLog::critical("Mismatched payload size. This can lead to memory corruption! FinalSize[{}] ExpectedSize[{}]", payload.m_size, packetLength + packetLengthSize);

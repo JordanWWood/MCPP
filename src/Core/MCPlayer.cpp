@@ -93,6 +93,7 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
         loginStart.Deserialize(payload.GetDeserializeStartPtr());
 
         m_username = loginStart.m_username;
+        m_uuid = loginStart.m_uuid;
         
         MCLog::debug("User from {} is {}", m_pConnection->GetRemoteAddress(), GetUsername());
         SendEncryptionRequest();
@@ -173,6 +174,15 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
         MCLog::debug("Queued authentication request. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
         
         return true;
+    }
+
+    if(payload.m_packetId == 3)
+    {
+        MCLog::debug("Received login ack. Username[{}] UUID[{}]", m_username, m_uuid.str());
+        m_state = EClientState::eCS_Configuration;
+
+        // TEMP return false to disconnect the client
+        return false;
     }
 
     return true;

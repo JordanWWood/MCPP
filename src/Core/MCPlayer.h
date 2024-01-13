@@ -4,6 +4,7 @@
 #include <string>
 
 #include "IPacketHandler.h"
+#include "uuid.h"
 
 struct IRSAKeyPair;
 enum class EClientState : uint8_t;
@@ -42,6 +43,7 @@ private:
     
     IConnectionPtr m_pConnection{ nullptr };
     EClientState m_state { static_cast<EClientState>(0) };
+    CUUID m_uuid;
     
     std::string m_verifyToken;
 };
