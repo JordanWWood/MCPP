@@ -13,7 +13,6 @@ project "Core"
         "%{wks.location}/src/Common",
         "%{wks.location}/src/Core",
         "%{IncludeDir.spdlog}",
-        "%{IncludeDir.uuid}",
         "%{IncludeDir.optick}",
         "%{IncludeDir.json}",
         "%{IncludeDir.concurrentqueues}"

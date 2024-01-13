@@ -14,8 +14,12 @@ struct ITCPServer;
 class CMCServer : public IServer
 {
 public:
+    /////////////////////////////////////////////////////////////////////
+    // IServer
     virtual bool Init() override;
     virtual bool Run() override;
+    // ~IServer
+    /////////////////////////////////////////////////////////////////////
     
 private:
     std::vector<std::shared_ptr<CMCPlayer>> m_players;

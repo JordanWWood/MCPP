@@ -2,8 +2,7 @@
 
 #include "Packets/IPacket.h"
 #include "PacketPayload.h"
-
-#include <uuid_v4.h>
+#include "uuid.h"
 
 struct SLoginSuccess : public IPacket
 {
@@ -43,10 +42,10 @@ struct SLoginSuccess : public IPacket
         uint32_t offset = 0;
         SerializeVarInt(payload.m_payload, packetLength, offset);
         SerializeVarInt(payload.m_payload + offset, 0x02, offset);
-
+        
         std::string uuidBytes = m_id.bytes();
-        SerializeULong(payload.m_payload + offset, *(uint64_t*)(uuidBytes.c_str() + 8), offset);
         SerializeULong(payload.m_payload + offset, *(uint64_t*)uuidBytes.c_str(), offset);
+        SerializeULong(payload.m_payload + offset, *(uint64_t*)(uuidBytes.c_str() + 8), offset);
         
         SerializeVarInt(payload.m_payload + offset, m_username.size(), offset);
         memcpy(payload.m_payload + offset, m_username.c_str(), m_username.size());
@@ -88,7 +87,7 @@ struct SLoginSuccess : public IPacket
         std::string m_signature;
     };
 
-    UUIDv4::UUID m_id;
+    CUUID m_id;
     std::string m_username;
     std::vector<SProperty> m_properties;
 };

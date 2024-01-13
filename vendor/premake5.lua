@@ -10,7 +10,7 @@ project "libcurl"
     kind "StaticLib"
     targetdir "%{wks.location}/bin64/%{cfg.buildcfg}/libs"
     language "C"
-    includedirs { "curl/include", "curl/lib", os.getenv("OPENSSL_INSTALL_DIR") .. "/include" }
+    includedirs { "curl/include", "curl/lib", "%{IncludeDir.openssl}" }
     defines { "BUILDING_LIBCURL", "CURL_STATICLIB", "USE_OPENSSL", "USE_IPV6" }
 
     files { "curl/include/**.h", "curl/lib/**.h", "curl/lib/**.c" }

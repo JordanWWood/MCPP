@@ -18,10 +18,14 @@ public:
     CMCPlayer(IConnectionPtr pConnection)
         : m_pConnection(std::move(pConnection))
     {}
-    
+
+    /////////////////////////////////////////////////////////////////////
+    // IPacketHandler
     virtual void NetworkTick() final;
     virtual bool ProcessPacket(SPacketPayload&& payload) final;
-
+    // ~IPacketHandler
+    /////////////////////////////////////////////////////////////////////
+    
     bool IsDead() const override;
     
     std::string GetUsername() const { return m_username; }

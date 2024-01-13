@@ -3,12 +3,18 @@
 #include <cstdint>
 #include <string>
 
-#include <endianness.h>
+#include <platform.h>
 
-#define SEGMENT_BITS 0x7F
-#define CONTINUE_BIT 0x80
+enum
+{
+    SEGMENT_BITS = 0x7F,
+    CONTINUE_BIT = 0x80
+};
 
-#define MAX_STRING_LENGTH 32767
+enum
+{
+    MAX_STRING_LENGTH = 32767
+};
 
 enum class EClientState : uint8_t
 {
@@ -29,6 +35,7 @@ struct IPacket
     // Serialization/Deserialization
     static uint16_t DeserializeShort(char* start, uint32_t& offset);
 
+    static uint64_t DeserializeULong(char* start, uint32_t& offset);
     static void SerializeULong(char* start, uint64_t value, uint32_t& offset);
 
     static int32_t DeserializeVarInt(char* start, uint32_t& offset);
@@ -45,9 +52,29 @@ inline uint16_t IPacket::DeserializeShort(char* start, uint32_t& offset)
     offset += 2;
     
     const uint16_t reverseInt = *reinterpret_cast<uint16_t*>(start);
+
+#ifdef LITTLEENDIAN
+    // packets are encoded big endian. So we need to invert the result if the system is little endian
+    return byteswap16(reverseInt);
+#endif
+
+    return reverseInt;
+}
+
+inline uint64_t IPacket::DeserializeULong(char* start, uint32_t& offset)
+{
+    OPTICK_EVENT();
+
+    offset += 8;
+
+    const uint64_t reverseInt = *reinterpret_cast<uint64_t*>(start);
     
-    // packets are encoded big endian. So we need to inert the result if the system is little endian
-    return betole16(reverseInt);
+// #ifdef LITTLEENDIAN
+//     // packets are encoded big endian. So we need to invert the result if the system is little endian
+//     return betole64(reverseInt);
+// #endif
+
+    return reverseInt;
 }
 
 inline void IPacket::SerializeULong(char* start, uint64_t value, uint32_t& offset)
@@ -56,7 +83,11 @@ inline void IPacket::SerializeULong(char* start, uint64_t value, uint32_t& offse
     
     offset += 8;
 
-    value = betole64(value);
+// #ifdef LITTLEENDIAN
+//     // packets are encoded big endian. So we need to invert what we write to the buffer if the system is little endian
+//     value = byteswap64(value);
+// #endif
+    
     memcpy(start, &value, 8);
 }
 

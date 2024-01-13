@@ -142,7 +142,9 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
             jsonBody["id"].get_to(id);
 
             SLoginSuccess request;
-            request.m_id = UUIDv4::UUID::fromStrFactory(id);
+            
+            
+            request.m_id = CUUID::fromStrFactory(ConvertSlimToFullUUID(id));
             request.m_username = GetUsername();
 
             nlohmann::json props = jsonBody["properties"];

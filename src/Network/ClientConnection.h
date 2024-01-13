@@ -35,7 +35,7 @@ public:
     bool SendQueuedPackets();
     
 private:
-    SPacketPayload ReadUnencryptedPacket(char* start, uint32_t& offset);
+    static SPacketPayload ReadUnencryptedPacket(char* start, uint32_t& offset);
 
     uint64_t m_clientSocket;
 

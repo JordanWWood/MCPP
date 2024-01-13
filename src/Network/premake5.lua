@@ -17,7 +17,6 @@ project "Network"
         "%{IncludeDir.spdlog}",
         "%{IncludeDir.optick}",
         "%{IncludeDir.openssl}",
-        "%{IncludeDir.uuid}",
         "%{IncludeDir.curl}",
         "%{IncludeDir.curlcpp}",
         "%{IncludeDir.concurrentqueues}"

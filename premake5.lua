@@ -3,8 +3,9 @@ include "dependencies.lua"
 workspace "MCPP"
     configurations { "Debug", "Release" }
     platforms { "Win32", "Win64", "Linux" }
+    
     startproject "Launcher"
-    defaultplatform ("Win64")
+    defaultplatform "Linux"
 
 project "Premake"
 	kind "Utility"
@@ -20,13 +21,15 @@ project "Premake"
 		"%{wks.location}/premake5.exe %{_ACTION} --file=\"%{wks.location}premake5.lua\""
 	}
 
+print "test9"
+
 group "MCPP"
     include "src/Common"
     include "src/Network"
     include "src/Core"
     include "src/System"
     include "src/Launcher"
-	
+
 group "Libs"
     include "vendor"
 group ""

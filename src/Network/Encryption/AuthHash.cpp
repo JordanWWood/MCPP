@@ -61,7 +61,7 @@ std::string SAuthHash::Finalise() const
 
     // remove any leading zeroes except the last
     auto view = std::string_view(hex);
-    while (view.size() && view[0] == '0')
+    while (!view.empty() && view[0] == '0')
         view = view.substr(1);
 
     // append the hex to the result

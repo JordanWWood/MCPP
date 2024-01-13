@@ -114,7 +114,7 @@ bool CClientConnection::SendQueuedPackets()
             int cipherLength = 0;
             char* encryptedPacket = reinterpret_cast<char*>(m_secret->EncryptPacket(reinterpret_cast<unsigned char*>(payload.m_payload), payload.m_size, cipherLength));
 
-            MCLog::debug("Sending encrypted packet. Raw[{}] Encrypted[{}]", spdlog::to_hex(payload.m_payload, payload.m_payload + payload.m_size), spdlog::to_hex(encryptedPacket, encryptedPacket + cipherLength));
+            MCLog::debug("Sending encrypted packet. Raw[{}] Encrypted[{}]", spdlog::to_hex(std::string(payload.m_payload, payload.m_size)), spdlog::to_hex(std::string(encryptedPacket, cipherLength)));
             iResult = send(m_clientSocket, encryptedPacket, cipherLength, 0);
 
             delete[] encryptedPacket;

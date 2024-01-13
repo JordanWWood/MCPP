@@ -27,3 +27,5 @@ Tools/
 Makefile
 
 bin-int/
+
+premake5

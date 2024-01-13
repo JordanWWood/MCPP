@@ -3,6 +3,7 @@
 #include "Packets/IPacket.h"
 #include "PacketPayload.h"
 #include "Encryption/IRSAKeyPair.h"
+#include "spdlog/fmt/bin_to_hex.h"
 
 struct SEncryptionResponse : public IPacket
 {

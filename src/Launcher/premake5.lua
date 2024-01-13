@@ -5,9 +5,10 @@
     objdir "%{wks.location}/obj/%{cfg.platform}_%{cfg.buildcfg}"
     
     links { 
+        "%{Library.libcrypto}",
+        "%{Library.libssl}",
         "OptickCore", 
         "spdlog", 
-        "libcurl", 
         "curlcpp",
         "Network", 
         "Core",
@@ -44,12 +45,15 @@
         links { 
             "crypt32.lib", 
             "ws2_32.lib", 
-            "wldap32.lib", 
-            os.getenv("OPENSSL_INSTALL_DIR") .. "/lib/libcrypto.lib",
-            os.getenv("OPENSSL_INSTALL_DIR") .. "/lib/libssl.lib"
+            "wldap32.lib",
+            "libcurl"
         }
 
     filter { "platforms:Linux" }
         system "linux"
         architecture "x64"
         toolset "gcc"
+
+        links {
+            "libcurl.so"
+        }
