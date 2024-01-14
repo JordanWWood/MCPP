@@ -166,9 +166,9 @@
   #define forceswap64(x) __builtin_bswap64(x)
 #elif defined(_MSC_VER)
   #include <stdlib.h>
-  #define byteswap16(x) _byteswap_ushort(x)
-  #define byteswap32(x) _byteswap_ulong(x)
-  #define byteswap64(x) _byteswap_uint64(x)
+  #define forceswap16(x) _byteswap_ushort(x)
+  #define forceswap32(x) _byteswap_ulong(x)
+  #define forceswap64(x) _byteswap_uint64(x)
 #else
   #define FALLBACK_SWAP
   #define forceswap16(x) swap_u16(x)

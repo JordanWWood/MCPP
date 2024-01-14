@@ -182,7 +182,7 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
         m_state = EClientState::eCS_Configuration;
 
         // TEMP return false to disconnect the client
-        return false;
+        return true;
     }
 
     return true;

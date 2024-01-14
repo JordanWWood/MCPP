@@ -55,7 +55,7 @@ inline uint16_t IPacket::DeserializeShort(char* start, uint32_t& offset)
 
 #ifdef LITTLEENDIAN
     // packets are encoded big endian. So we need to invert the result if the system is little endian
-    return byteswap16(reverseInt);
+    return forceswap16(reverseInt);
 #endif
 
     return reverseInt;

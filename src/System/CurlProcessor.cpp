@@ -81,7 +81,7 @@ void CCurlProcessor::ThreadUpdate()
 
                 auto content = activeRequest.m_easyStream->get_stream()->str();
 
-                MCLog::debug("Code[{}] Type[{}] HttpCode[{}] URL[{}] Content[{}]", response_code.get(), content_type.get(), http_code.get(), url.get(), content);
+                MCLog::debug("Code[{}] Type[{}] HttpCode[{}] URL[{}]", response_code.get(), content_type.get(), http_code.get(), url.get());
 
                 activeRequest.m_callback(true, content);
                 m_runningRequests.erase(handler->get_curl());

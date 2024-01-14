@@ -74,7 +74,7 @@ struct SLoginSuccess : public IPacket
         
         payload.m_size = offset;
 
-        if (payload.m_size != (packetLength + packetLengthSize) - 1)
+        if (payload.m_size != (packetLength + packetLengthSize))
             MCLog::critical("Mismatched payload size. This can lead to memory corruption! FinalSize[{}] ExpectedSize[{}]", payload.m_size, packetLength + packetLengthSize);
         
         return payload;

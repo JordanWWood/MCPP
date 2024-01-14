@@ -34,9 +34,10 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
     {
         char* m_decryptedBuffer = nullptr;
         char* start;
+        uint32_t totalOffset = 0;
         if (m_encryptionEnabled)
         {
-            m_decryptedBuffer = reinterpret_cast<char*>(m_secret->DecryptPacket(reinterpret_cast<unsigned char*>(recvBuffer), recvBufferLength));
+            m_decryptedBuffer = reinterpret_cast<char*>(m_secret->DecryptPacket(reinterpret_cast<unsigned char*>(recvBuffer), iResult));
             start = m_decryptedBuffer;
         }
         else
@@ -53,6 +54,7 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
             // Shift the start to the beginning of what would be the next packet
             start = start + (payload.m_size + offset);
             uint32_t packetId = payload.m_packetId;
+            totalOffset += (payload.m_size + offset);
             
             const bool result = pHandler->ProcessPacket(std::move(payload));
             if (!result)
@@ -64,7 +66,7 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
                 m_clientSocket = INVALID_SOCKET;
                 break;
             }
-        } while (*start != 0);
+        } while (totalOffset < iResult);
         
         return true;
     }
