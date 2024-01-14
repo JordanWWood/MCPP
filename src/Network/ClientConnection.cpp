@@ -68,6 +68,7 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
             }
         } while (totalOffset < iResult);
         
+        delete[] m_decryptedBuffer;
         return true;
     }
 
