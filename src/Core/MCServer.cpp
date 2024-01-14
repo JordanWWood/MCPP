@@ -3,14 +3,7 @@
 #include "MCServer.h"
 #include "MCPlayer.h"
 
-#include "Packets/IPacket.h"
-
-#include <chrono>
-
 #include "IGlobalEnvironment.h"
-#include "ITCPServer.h"
-
-// TODO server logic
 
 bool CMCServer::Init()
 {

@@ -29,7 +29,9 @@ public:
     
     bool IsDead() const override;
     
-    std::string GetUsername() const { return m_username; }
+    const std::string& GetUsername() const { return m_username; }
+    const CUUID& GetUUID() const { return m_uuid; }
+    const std::string& GetRemoteAddress() const;
     EClientState GetCurrentState() const { return m_state; }
 private:
     bool HandleHandshake(SPacketPayload&& payload);

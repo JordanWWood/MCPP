@@ -59,6 +59,11 @@ bool CMCPlayer::IsDead() const
     return m_pConnection->IsSocketClosed();
 }
 
+const std::string& CMCPlayer::GetRemoteAddress() const
+{
+    return m_pConnection->GetRemoteAddress();
+}
+
 bool CMCPlayer::HandleHandshake(SPacketPayload&& payload)
 {
     OPTICK_EVENT();
@@ -96,10 +101,20 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
         m_uuid = loginStart.m_uuid;
         
         MCLog::debug("User from {} is {}", m_pConnection->GetRemoteAddress(), GetUsername());
-        SendEncryptionRequest();
 
-        MCLog::debug("Sent encryption request. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
-        
+        // If we're online we want to encrypt the connection
+        if (IGlobalEnvironment::Get()->IsOnline())
+        {
+            SendEncryptionRequest();
+            MCLog::debug("Sent encryption request. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
+            return true;
+        }
+
+        SLoginSuccess loginSuccess;
+        loginSuccess.m_id = m_uuid;
+        loginSuccess.m_username = m_username;
+
+        m_pConnection->QueuePacket(loginSuccess.Serialize());
         return true;
     }
 
@@ -143,8 +158,6 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
             jsonBody["id"].get_to(id);
 
             SLoginSuccess request;
-            
-            
             request.m_id = CUUID::fromStrFactory(ConvertSlimToFullUUID(id));
             request.m_username = GetUsername();
 

@@ -45,7 +45,7 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
 
         std::vector<SPacketPayload> payloads;
 
-        // As long as start continues to be a size we have more to read. Keep building payloads until we are done
+        // Keep processing packets until we've read the entire buffer
         do
         {
             uint32_t offset = 0;
@@ -54,6 +54,8 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
             // Shift the start to the beginning of what would be the next packet
             start = start + (payload.m_size + offset);
             uint32_t packetId = payload.m_packetId;
+
+            // Keep track of how much we've read so far
             totalOffset += (payload.m_size + offset);
             
             const bool result = pHandler->ProcessPacket(std::move(payload));
