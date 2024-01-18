@@ -6,21 +6,15 @@
 
 struct SHandshake final : public IPacket
 {
-    virtual void Deserialize(char* start) override
-    {
-        uint32_t offset = 0;
-        m_protocolVersion = DeserializeVarInt(start, offset);
-        m_address = DeserializeString(&start[offset], 32, offset);
-        m_port = DeserializeShort(&start[offset], offset);
-        m_nextState = static_cast<uint8_t>(start[offset]);
-    }
+    SHandshake() : IPacket(0x00) {}
 
-    virtual SPacketPayload Serialize() override
-    {
-        // TODO
-        return SPacketPayload();
-    }
-    
+    SERIALIZE_BEGIN()
+        SERIALIZE_VARINT(m_protocolVersion)
+        SERIALIZE_STRING(m_address, 32)
+        SERIALIZE_SHORT(m_port)
+        SERIALIZE_U8(m_nextState)
+    SERIALIZE_END()
+
     uint32_t m_protocolVersion { 0 };
     std::string m_address;
     uint16_t m_port { 0 };

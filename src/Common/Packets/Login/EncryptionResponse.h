@@ -7,26 +7,18 @@
 
 struct SEncryptionResponse : public IPacket
 {
-    virtual void Deserialize(char* start) override
-    {
-        OPTICK_EVENT();
-        
-        uint32_t offset = 0;
-        std::string encrptedSharedSecret = DeserializeString(start, 512, offset);
-        m_sharedSecret = m_pServerKey->Decrypt(encrptedSharedSecret);
+    SEncryptionResponse() : IPacket(0x01) {}
 
-        std::string encryptedVerifyToken = DeserializeString(start + offset, 512, offset);
-        m_verifyTokenValue = m_pServerKey->Decrypt(encryptedVerifyToken);
-    }
-
-    // We will connect to other servers unencrypted since it'll be offline mode
-    // In theory we'll never need to Serialize this packet
-    virtual SPacketPayload Serialize() override
-    {
-        return {};
-    }
+    // We will never want to send this packet so this should be fine
+    SERIALIZE_BEGIN()
+    SERIALIZE_STRING(m_sharedSecret, 32767)
+    m_sharedSecret = m_pServerKey->Decrypt(m_sharedSecret);
+    SERIALIZE_STRING(m_verifyTokenValue, 32767)
+    m_verifyTokenValue = m_pServerKey->Decrypt(m_verifyTokenValue);
+    SERIALIZE_END()
 
     std::shared_ptr<IRSAKeyPair> m_pServerKey { nullptr };
+    
     std::string m_sharedSecret;
     std::string m_verifyTokenValue;
 };
