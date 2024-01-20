@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "IPacket.h"
 
-class CPacketWriter : IPacketVisitor
+class CPacketWriter : public IPacketVisitor
 {
 public:
     CPacketWriter(uint32_t size) : m_data(new char[size])
@@ -9,10 +9,11 @@ public:
         memset(m_data, 0, size);
     }
 
-    bool SizeFirst() const override { return false; }
+    bool SizeFirst() const override { return true; }
+    char* GetData() const { return m_data; }
 private:
     void OnShort(uint16_t& value) override;
-    void OnVarInt(uint32_t& value) override;
+    void OnVarInt(int& value) override;
     void OnULong(uint64_t& value) override;
     void OnString(std::string& value, const uint32_t maxSize) override;
     void OnUInt8(uint8_t& value) override;

@@ -11,9 +11,9 @@
 class CClientConnection : public IConnection
 {
 public:
-    CClientConnection(uint64_t socket, const std::string& socketAddress)
+    CClientConnection(uint64_t socket, std::string socketAddress)
         : m_clientSocket(socket)
-        , m_socketAddress(socketAddress)
+        , m_socketAddress(std::move(socketAddress))
     {}
 
     ~CClientConnection() override;
@@ -35,7 +35,7 @@ public:
     bool SendQueuedPackets();
     
 private:
-    static SPacketPayload ReadUnencryptedPacket(char* start, uint32_t& offset);
+    static SPacketPayload ReadUnencryptedPacket(char* start, uint32_t maxSize);
 
     uint64_t m_clientSocket;
 

@@ -21,10 +21,7 @@ Copyright (c) 2018 Xavier "Crashoz" Launey
 static std::string ConvertSlimToFullUUID(const std::string& uuid)
 {
   if(uuid.length() != 32)
-  {
-    MCLog::warn("string \"{}\" is either too long or too short to be a uuid");
     return "";
-  }
     
   std::string id;
   id.append(uuid.data(), uuid.data() + 8);

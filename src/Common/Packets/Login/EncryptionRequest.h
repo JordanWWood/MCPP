@@ -9,8 +9,8 @@ struct SEncryptionRequest : public IPacket
 
     SERIALIZE_BEGIN()
     SERIALIZE_STRING(m_serverId, 20)
-    SERIALIZE_STRING(m_publicKey, 32767)
-    SERIALIZE_STRING(m_verifyToken, 32767)
+    SERIALIZE_STRING(m_publicKey, MAX_STRING_LENGTH)
+    SERIALIZE_STRING(m_verifyToken, MAX_STRING_LENGTH)
     SERIALIZE_END()
 
     std::string m_serverId;

@@ -39,9 +39,11 @@ void Serialize(IPacketVisitor& visitor) override { \
     SERIALIZE_VARINT(m_packetId)                        
 
 #define SERIALIZE_END()                            \
-   if(!visitor.SizeFirst())                        \
-       SERIALIZE_VARINT(m_packetSize)                \
-   }
+   if(!visitor.SizeFirst()) {                      \
+       visitor.m_isEnd = true;                     \
+       SERIALIZE_VARINT(m_packetSize)              \
+   }                                               \
+}
 
 struct IPacketVisitor
 {
@@ -49,11 +51,13 @@ struct IPacketVisitor
     virtual bool SizeFirst() const = 0;
     
     virtual void OnShort(uint16_t& value) = 0;
-    virtual void OnVarInt(uint32_t& value) = 0;
+    virtual void OnVarInt(int& value) = 0;
     virtual void OnULong(uint64_t& value) = 0;
     virtual void OnString(std::string& value, const uint32_t maxSize) = 0;
     virtual void OnUInt8(uint8_t& value) = 0;
     virtual void OnUUID(CUUID& uuid) = 0;
+
+    bool m_isEnd = false;
 };
 
 struct IPacket

@@ -5,20 +5,20 @@ void CPacketWriter::OnShort(uint16_t& value)
     // TODO
 }
 
-void CPacketWriter::OnVarInt(uint32_t& value)
+void CPacketWriter::OnVarInt(int& value)
 {
-    const uint32_t startOffset = m_size;
+    uint32_t valueCopy = value;
     while (true) {
-        const uint32_t position = m_size - startOffset;
+        const uint32_t position = m_size;
         m_size++;
         
-        if ((value & ~SEGMENT_BITS) == 0) {
-            m_data[position] = static_cast<char>(value);
+        if ((valueCopy & ~SEGMENT_BITS) == 0) {
+            m_data[position] = static_cast<char>(valueCopy);
             return;
         }
 
-        m_data[position] = static_cast<char>((value & SEGMENT_BITS) | CONTINUE_BIT);
-        value = value >> 7;
+        m_data[position] = static_cast<char>((valueCopy & SEGMENT_BITS) | CONTINUE_BIT);
+        valueCopy = valueCopy >> 7;
     }
 }
 
@@ -44,7 +44,7 @@ void CPacketWriter::OnUInt8(uint8_t& value)
 {
 }
 
-void CPacketWriter::OnUUID(CUUID uuid)
+void CPacketWriter::OnUUID(CUUID& uuid)
 {
     
 }

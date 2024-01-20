@@ -6,6 +6,10 @@ project "Common"
     
     cppdialect "C++20"
     
+    includedirs {
+        "%{wks.location}/src/Common"
+    }
+    
     files { "**.cpp", "**.h" }
     
     filter "configurations:Debug"

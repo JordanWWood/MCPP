@@ -17,13 +17,13 @@ struct SLoginSuccess : public IPacket
         SERIALIZE_VARINT(length)
         for(SProperty& prop : m_properties)
         {
-            SERIALIZE_STRING(prop.m_name, 32767)
-            SERIALIZE_STRING(prop.m_value, 32767)
+            SERIALIZE_STRING(prop.m_name, MAX_STRING_LENGTH)
+            SERIALIZE_STRING(prop.m_value, MAX_STRING_LENGTH)
 
             if(prop.m_signed)
                 SERIALIZE_U8(*reinterpret_cast<uint8_t*>(&prop.m_signed))
             
-            SERIALIZE_STRING(prop.m_signature, 32767)
+            SERIALIZE_STRING(prop.m_signature, MAX_STRING_LENGTH)
         }
     SERIALIZE_END()
 

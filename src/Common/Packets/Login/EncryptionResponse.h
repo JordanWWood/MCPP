@@ -11,9 +11,9 @@ struct SEncryptionResponse : public IPacket
 
     // We will never want to send this packet so this should be fine
     SERIALIZE_BEGIN()
-    SERIALIZE_STRING(m_sharedSecret, 32767)
+    SERIALIZE_STRING(m_sharedSecret, MAX_STRING_LENGTH)
     m_sharedSecret = m_pServerKey->Decrypt(m_sharedSecret);
-    SERIALIZE_STRING(m_verifyTokenValue, 32767)
+    SERIALIZE_STRING(m_verifyTokenValue, MAX_STRING_LENGTH)
     m_verifyTokenValue = m_pServerKey->Decrypt(m_verifyTokenValue);
     SERIALIZE_END()
 

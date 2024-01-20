@@ -6,8 +6,8 @@ class CPacketReader : public IPacketVisitor
 {
 public:
     CPacketReader(char* start) : m_current(start) {}
-    bool SizeFirst() const override { return false; }
-private:
+    bool SizeFirst() const override { return true; }
+
     void OnShort(uint16_t& value) override;
     void OnVarInt(uint32_t& value) override;
     void OnULong(uint64_t& value) override;

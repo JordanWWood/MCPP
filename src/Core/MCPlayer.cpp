@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 #include "MCPlayer.h"
 
 #include <random>
@@ -14,6 +14,9 @@
 
 #include "IConnection.h"
 #include "IGlobalEnvironment.h"
+#include "PacketUtils.h"
+#include "Packets/PacketReader.h"
+#include "Packets/PacketSizeCalc.h"
 #include "Packets/Login/LoginSuccess.h"
 
 // TODO do something better than this
@@ -69,7 +72,9 @@ bool CMCPlayer::HandleHandshake(SPacketPayload&& payload)
     OPTICK_EVENT();
 
     SHandshake handshake;
-    handshake.Deserialize(payload.GetDeserializeStartPtr());
+
+    CPacketReader reader(payload.m_payload);
+    handshake.Serialize(reader);
 
     if (handshake.m_protocolVersion != PROTOCOL_VERSION)
         return false;
@@ -94,8 +99,9 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
     {
         MCLog::debug("Received login start. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
         
-        LoginStart loginStart;
-        loginStart.Deserialize(payload.GetDeserializeStartPtr());
+        SLoginStart loginStart;
+        CPacketReader reader(payload.m_payload);
+        loginStart.Serialize(reader);
 
         m_username = loginStart.m_username;
         m_uuid = loginStart.m_uuid;
@@ -114,7 +120,7 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
         loginSuccess.m_id = m_uuid;
         loginSuccess.m_username = m_username;
 
-        m_pConnection->QueuePacket(loginSuccess.Serialize());
+        m_pConnection->QueuePacket(SerializePacket(loginSuccess));
         return true;
     }
 
@@ -127,7 +133,9 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
         SEncryptionResponse response;
         response.m_pServerKey = pKey;
 
-        response.Deserialize(payload.GetDeserializeStartPtr());
+        CPacketReader reader(payload.m_payload);
+        response.Serialize(reader);
+
         MCLog::debug("Deserialized encryption response. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
         
         if (response.m_verifyTokenValue != m_verifyToken)
@@ -181,7 +189,7 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
             }
 
             MCLog::debug("Sending LoginSuccess. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
-            m_pConnection->QueuePacket(request.Serialize());
+            m_pConnection->QueuePacket(SerializePacket(request));
         });
 
         MCLog::debug("Queued authentication request. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
@@ -208,7 +216,31 @@ bool CMCPlayer::HandleStatus(SPacketPayload&& payload)
     if(payload.m_packetId == 0)
     {
         SStatusResponse response;
-        m_pConnection->QueuePacket(response.Serialize());
+
+        // TODO replace this with some actual stats
+        response.m_body = {
+            {
+                "version", {
+                            {"name", "1.20.4"},
+                            {"protocol", 765}
+                }
+            },
+            {
+                "players", {
+                            { "max", 10000 },
+                            { "online", 0 }
+                }
+            },
+            {
+                "description", {
+                            { "text", "MCPP Server" }
+                }
+            },
+            {"enforceSecureChat", true},
+            {"previewsChat", true}
+        };
+        
+        m_pConnection->QueuePacket(SerializePacket(response));
     }
 
     if(payload.m_packetId == 1)
@@ -241,7 +273,7 @@ bool CMCPlayer::SendEncryptionRequest()
     request.m_verifyTokenLength = static_cast<uint32_t>(m_verifyToken.size());
     request.m_verifyToken = m_verifyToken;
     
-    m_pConnection->QueuePacket(request.Serialize());
+    m_pConnection->QueuePacket(SerializePacket(request));
 
     return true;
 }

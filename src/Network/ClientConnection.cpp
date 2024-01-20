@@ -9,6 +9,9 @@
 #include <vector>
 #include <openssl/err.h>
 
+#include "Packets/PacketReader.h"
+#include "Packets/PacketSizeCalc.h"
+
 #ifdef _WIN32
 #include <WinSock2.h>
 #endif
@@ -46,17 +49,18 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
         std::vector<SPacketPayload> payloads;
 
         // Keep processing packets until we've read the entire buffer
-        do
-        {
-            uint32_t offset = 0;
-            SPacketPayload payload = ReadUnencryptedPacket(start, offset);
+        while (totalOffset < iResult) {
+            SPacketPayload payload = ReadUnencryptedPacket(start, iResult);
+
+            if(!payload.m_payload)
+                break;
             
             // Shift the start to the beginning of what would be the next packet
-            start = start + (payload.m_size + offset);
+            start += payload.m_size;
             uint32_t packetId = payload.m_packetId;
 
             // Keep track of how much we've read so far
-            totalOffset += (payload.m_size + offset);
+            totalOffset += payload.m_size;
             
             const bool result = pHandler->ProcessPacket(std::move(payload));
             if (!result)
@@ -68,7 +72,7 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
                 m_clientSocket = INVALID_SOCKET;
                 break;
             }
-        } while (totalOffset < iResult);
+        }
         
         delete[] m_decryptedBuffer;
         return true;
@@ -135,26 +139,31 @@ bool CClientConnection::SendQueuedPackets()
     return false;
 }
 
-SPacketPayload CClientConnection::ReadUnencryptedPacket(char* start, uint32_t& offset)
+SPacketPayload CClientConnection::ReadUnencryptedPacket(char* start, uint32_t maxSize)
 {
     OPTICK_EVENT()
     
-    const uint32_t payloadSize = IPacket::DeserializeVarInt(start, offset);
-    const uint32_t sizeOffset = offset;
-            
-    const uint32_t packetId = IPacket::DeserializeVarInt(start + offset, offset);
-    const uint32_t packetIdSize = offset - sizeOffset;
+    CPacketReader reader(start);
+    uint32_t payloadSize = 0;
+    reader.OnVarInt(payloadSize);
 
-    const uint32_t finalPayloadSize = payloadSize - packetIdSize;
-            
+    CPacketSizeCalc sizeCalc;
+    sizeCalc.OnVarInt(payloadSize);
+    
+    uint32_t packetId = 0;
+    reader.OnVarInt(packetId);
+    const uint32_t finalPayloadSize = payloadSize + sizeCalc.GetFullSize();
+    
     // Create a payload that will be routed to the relevant state handler
     SPacketPayload payload;
     payload.m_packetId = packetId;
     payload.m_size = finalPayloadSize;
-    payload.m_startOffset = offset;
 
-    payload.m_payload = new char[payloadSize + sizeOffset];
-    memmove(payload.m_payload, start, payloadSize + sizeOffset);
+    if(finalPayloadSize > maxSize)
+        return SPacketPayload();
+    
+    payload.m_payload = new char[finalPayloadSize];
+    memmove(payload.m_payload, start, finalPayloadSize);
 
     return payload;
 }

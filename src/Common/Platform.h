@@ -80,7 +80,6 @@
   #endif
 #endif
 
-
 #ifdef BIGENDIAN
   // Try to use compiler intrinsics
   #if defined(__INTEL_COMPILER) || defined(__ICC)
