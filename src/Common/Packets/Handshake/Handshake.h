@@ -15,7 +15,7 @@ struct SHandshake final : public IPacket
         SERIALIZE_U8(m_nextState)
     SERIALIZE_END()
 
-    uint32_t m_protocolVersion { 0 };
+    int m_protocolVersion { 0 };
     std::string m_address;
     uint16_t m_port { 0 };
     uint8_t m_nextState { 0 };

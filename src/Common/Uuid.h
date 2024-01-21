@@ -1,7 +1,6 @@
 /*
-MIT License
-
-Copyright (c) 2018 Xavier "Crashoz" Launey
+Portions of this file are included from uuid_v4 https://github.com/crashoz/uuid_v4
+MIT License Copyright (c) 2018 Xavier "Crashoz" Launey
 */
 
 #pragma once

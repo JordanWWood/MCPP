@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <string>
 
-#include "uuid.h"
+#include "Uuid.h"
 
 enum
 {
@@ -31,6 +31,20 @@ enum class EClientState : uint8_t
 #define SERIALIZE_STRING(string, maxSize) visitor.OnString(string, maxSize);
 #define SERIALIZE_U8(u8) visitor.OnUInt8(u8);
 #define SERIALIZE_UUID(uuid) visitor.OnUUID(uuid);
+#define SERIALIZE_ARRAY_BEGIN(arr, type)           \
+    int currentSize = (arr).size();                \
+    SERIALIZE_VARINT(currentSize)                  \
+    for(int i = 0; i < (currentSize); ++i)         \
+    {                                              \
+        type current = type();                     \
+        if((arr).size() > 0)                       \
+            current = (arr)[i];
+        
+
+#define SERIALIZE_ARRAY_END(arr)                   \
+        if((arr).size() < 0)                       \
+            (arr).push_back(current);              \
+    }
 
 #define SERIALIZE_BEGIN()                          \
 void Serialize(IPacketVisitor& visitor) override { \
@@ -72,6 +86,6 @@ struct IPacket
         m_packetSize = size;
     }
 
-    uint32_t m_packetId;
-    uint32_t m_packetSize = 0;
+    int m_packetId;
+    int m_packetSize = 0;
 };

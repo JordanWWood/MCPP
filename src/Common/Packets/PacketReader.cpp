@@ -16,7 +16,7 @@ void CPacketReader::OnShort(uint16_t& value)
     m_current += sizeof(uint16_t);
 }
 
-void CPacketReader::OnVarInt(uint32_t& value)
+void CPacketReader::OnVarInt(int& value)
 {
     int position = 0;
 
@@ -48,7 +48,7 @@ void CPacketReader::OnString(std::string& value, uint32_t maxSize)
     if(maxSize >= MAX_STRING_LENGTH)
         return;
 
-    uint32_t length = 0;
+    int length = 0;
     OnVarInt(length);
 
     // Adding the offset since we want to trim the size of the string

@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "uuid.h"
+#include "Uuid.h"
 #include "Packets/IPacket.h"
 
 class SLoginStart : public IPacket

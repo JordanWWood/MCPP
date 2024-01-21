@@ -4,7 +4,7 @@
 #include <string>
 
 #include "IPacketHandler.h"
-#include "uuid.h"
+#include "Uuid.h"
 
 struct IRSAKeyPair;
 enum class EClientState : uint8_t;

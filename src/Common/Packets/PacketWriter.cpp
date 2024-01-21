@@ -34,7 +34,7 @@ void CPacketWriter::OnString(std::string& value, const uint32_t maxSize)
     if (value.length() > maxSize)
         return;
 
-    uint32_t size = value.size();
+    int size = value.size();
     OnVarInt(size);
     memcpy(m_data + m_size, value.c_str(), value.size());
     m_size += value.size();
@@ -46,5 +46,7 @@ void CPacketWriter::OnUInt8(uint8_t& value)
 
 void CPacketWriter::OnUUID(CUUID& uuid)
 {
-    
+    const std::string uuidBytes = uuid.bytes();
+    OnULong(*(uint64_t*)uuidBytes.c_str());
+    OnULong(*(uint64_t*)(uuidBytes.c_str() + 8));
 }
