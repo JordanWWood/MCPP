@@ -33,16 +33,17 @@ enum class EClientState : uint8_t
 #define SERIALIZE_UUID(uuid) visitor.OnUUID(uuid);
 #define SERIALIZE_ARRAY_BEGIN(arr, type)           \
     int currentSize = (arr).size();                \
+    int startSize = (arr).size();                  \
     SERIALIZE_VARINT(currentSize)                  \
     for(int i = 0; i < (currentSize); ++i)         \
     {                                              \
         type current = type();                     \
-        if((arr).size() > 0)                       \
+        if(startSize > 0)                          \
             current = (arr)[i];
         
 
 #define SERIALIZE_ARRAY_END(arr)                   \
-        if((arr).size() < 0)                       \
+        if(startSize == 0)                         \
             (arr).push_back(current);              \
     }
 
