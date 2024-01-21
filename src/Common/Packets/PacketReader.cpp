@@ -45,7 +45,7 @@ void CPacketReader::OnULong(uint64_t& value)
 
 void CPacketReader::OnString(std::string& value, uint32_t maxSize)
 {
-    if(maxSize >= MAX_STRING_LENGTH)
+    if(value.size() >= maxSize)
         return;
 
     int length = 0;

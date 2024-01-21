@@ -7,6 +7,7 @@ MIT License Copyright (c) 2018 Xavier "Crashoz" Launey
 
 #include <random>
 #include <string>
+#include <sstream>
 #include <limits>
 #include <cstdint>
 #include <memory>

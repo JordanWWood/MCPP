@@ -144,13 +144,13 @@ SPacketPayload CClientConnection::ReadUnencryptedPacket(char* start, uint32_t ma
     OPTICK_EVENT()
     
     CPacketReader reader(start);
-    uint32_t payloadSize = 0;
+    int payloadSize = 0;
     reader.OnVarInt(payloadSize);
 
     CPacketSizeCalc sizeCalc;
     sizeCalc.OnVarInt(payloadSize);
     
-    uint32_t packetId = 0;
+    int packetId = 0;
     reader.OnVarInt(packetId);
     const uint32_t finalPayloadSize = payloadSize + sizeCalc.GetFullSize();
     

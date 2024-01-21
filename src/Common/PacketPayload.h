@@ -16,8 +16,8 @@ struct SPacketPayload
 
     char* m_payload{ nullptr };
     
-    uint32_t m_packetId{ 0 };
-    uint32_t m_size{ 0 };
+    int m_packetId{ 0 };
+    int m_size{ 0 };
 };
 
 inline SPacketPayload::~SPacketPayload()
