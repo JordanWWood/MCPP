@@ -52,7 +52,7 @@ void CNetwork::UnregisterConnectionCallback(void* creator)
 
 std::string CNetwork::GenerateHexDigest(std::string publicKey, std::string sharedSecret)
 {
-    OPTICK_EVENT();
+    MCPP_PROFILE_SCOPE();
     
     SAuthHash hasher;
     hasher.Update(sharedSecret);
@@ -69,7 +69,7 @@ void CNetwork::NetworkTick()
     while (!m_shutdown)
     {
         {
-            OPTICK_EVENT("Network Update");
+            MCPP_PROFILE_NAMED_SCOPE("Network Update");
 
             // TODO we should reestablish the listen socket if it closes. For now the application just exits
             if (m_tcpServer.IsSocketClosed())
@@ -133,7 +133,7 @@ void CNetwork::NetworkTick()
         }
         
         {
-            OPTICK_EVENT("Sleep");
+            MCPP_PROFILE_NAMED_SCOPE("Sleep");
             std::this_thread::sleep_until(nextFrame);
             nextFrame += TNetworkThreadFrame{1};
         }

@@ -20,6 +20,8 @@ public:
     void RegisterConnectionCallback(void* pCreator, std::function<void(const IConnectionPtr& pConnection)>&& functor) override;
     void UnregisterConnectionCallback(void* creator) override;
 
+    bool HasShutdown() const override { return m_shutdown; }
+
     std::shared_ptr<IRSAKeyPair> GetServerKeyPair() override { return m_pKeyPair; }
     std::string GenerateHexDigest(std::string publicKey, std::string sharedSecret) override;
     // ~INetwork

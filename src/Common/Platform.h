@@ -1,5 +1,26 @@
 ﻿#pragma once
 
+// Profiling
+#define MCPP_PROFILE_SCOPE() OPTICK_EVENT(__FUNCTION__)
+#define MCPP_PROFILE_NAMED_SCOPE(event) OPTICK_EVENT(event)
+
+// Sockets
+#if !defined(_WIN32)
+#define SOCKET int
+#define INVALID_SOCKET 0
+#define SOCKET_ERROR -1
+#define WOULD_BLOCK EWOULDBLOCK
+#define CLOSE_SOCKET(s) close(s)
+#define GET_SOCKET_ERR() (errno)
+#define SETUP_NETWORK()
+#define CLEANUP_NETWORK()
+#else
+#define CLOSE_SOCKET(s) closesocket(s)
+#define GET_SOCKET_ERR() WSAGetLastError()
+#define CLEANUP_NETWORK() WSACleanup()
+#define WOULD_BLOCK WSAEWOULDBLOCK
+#endif
+
 /////////////////////////////////////////////////////////////////////
 // Endianness
 // This is a modified version of endianness.h from https://github.com/crashoz/uuid_v4
@@ -117,6 +138,16 @@
   #define betole256(x) swap_u256(x)
   #define letobe128(x) x
   #define letobe256(x) x
+
+  static __m128i swap_u128(__m128i value) {
+    const __m128i shuffle = _mm_set_epi64x(0x0001020304050607, 0x08090a0b0c0d0e0f);
+    return _mm_shuffle_epi8(value, shuffle);
+  }
+  
+  static __m256i swap_u256(__m256i value) {
+    const __m256i shuffle = _mm256_set_epi64x(0x0001020304050607, 0x08090a0b0c0d0e0f, 0x0001020304050607, 0x08090a0b0c0d0e0f);
+    return _mm256_shuffle_epi8(value, shuffle);
+  }
 #else
   #if defined(__INTEL_COMPILER) || defined(__ICC)
     #define betole16(x) x
@@ -151,8 +182,6 @@
   #endif
   #define betole128(x) x
   #define betole256(x) x
-  #define letobe128(x) swap_u128(x)
-  #define letobe256(x) swap_u256(x)
 #endif
 
 #if defined(__INTEL_COMPILER) || defined(__ICC)
@@ -178,16 +207,6 @@
 #include <emmintrin.h>
 #include <immintrin.h>
 #include <tmmintrin.h>
-
-inline __m128i swap_u128(__m128i value) {
-  const __m128i shuffle = _mm_set_epi64x(0x0001020304050607, 0x08090a0b0c0d0e0f);
-  return _mm_shuffle_epi8(value, shuffle);
-}
-
-inline __m256i swap_u256(__m256i value) {
-  const __m256i shuffle = _mm256_set_epi64x(0x0001020304050607, 0x08090a0b0c0d0e0f, 0x0001020304050607, 0x08090a0b0c0d0e0f);
-  return _mm256_shuffle_epi8(value, shuffle);
-}
 
 #if defined(FALLBACK_SWAP)
   #include <stdint.h>

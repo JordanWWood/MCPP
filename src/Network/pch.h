@@ -6,7 +6,9 @@
 
 #include <optick.h>
 #include <spdlog/spdlog.h>
+#include <Platform.h>
 
+// Networking includes
 #ifdef _WIN32
 #include <WinSock2.h>
 #include <WS2tcpip.h>

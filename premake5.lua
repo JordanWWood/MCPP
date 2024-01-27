@@ -1,3 +1,9 @@
+isVisualStudio = false
+
+if _ACTION == "vs2010" or _ACTION == "vs2012" or _ACTION == "vs2015" or _ACTION == "vs2017" or _ACTION == "vs2022" then
+	isVisualStudio = true
+end
+
 include "dependencies.lua"
 
 workspace "MCPP"
@@ -20,8 +26,6 @@ project "Premake"
 	postbuildcommands {
 		"%{wks.location}/premake5.exe %{_ACTION} --file=\"%{wks.location}premake5.lua\""
 	}
-
-print "test9"
 
 group "MCPP"
     include "src/Common"

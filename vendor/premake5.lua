@@ -6,6 +6,7 @@ project "zlib"
 	
 	files {	"zlib/*.c", "zlib/*.h" }
 	
+if isVisualStudio then
 project "libcurl"
     kind "StaticLib"
     targetdir "%{wks.location}/bin64/%{cfg.buildcfg}/libs"
@@ -18,6 +19,7 @@ project "libcurl"
     filter "configurations:Debug"
         defines { "DEBUGBUILD" }
         symbols "On"
+end
 	
 project "curlcpp"
     kind "StaticLib"
@@ -56,12 +58,19 @@ project "OptickCore"
 	language "C++"
 	defines { "_CRT_SECURE_NO_WARNINGS", "OPTICK_LIB=1", "OPTICK_EXPORTS", "OPTICK_ENABLE_GPU_D3D12=0", "OPTICK_ENABLE_GPU_VULKAN=0" }
 
+if isVisualStudio then
+    cppdialect "C++11"
+else
+	cppdialect "gnu++11"
+end
+
 	includedirs { "optick/src" }
 	
 	files {
 		"optick/src/**.cpp",
 		"optick/src/**.h", 
 	}
+	
 	vpaths {
 		["api"] = { 
 			"optick/src/optick.h",

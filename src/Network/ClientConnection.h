@@ -37,7 +37,7 @@ public:
 private:
     static SPacketPayload ReadUnencryptedPacket(char* start, uint32_t maxSize);
 
-    uint64_t m_clientSocket;
+    SOCKET m_clientSocket;
 
     std::string m_socketAddress;
     ESocketState m_socketState{ ESocketState::eSS_CONNECTED };

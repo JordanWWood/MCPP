@@ -24,7 +24,7 @@ public:
     // ~ITCPServer
     /////////////////////////////////////////////////////////////////////
 private:
-    UINT_PTR m_listenSocket { INVALID_SOCKET };
+    SOCKET m_listenSocket { INVALID_SOCKET };
     ESocketState m_listenSocketState { ESocketState::eSS_UNINITIALISED };
 
     const uint16_t m_port{ 25565 };

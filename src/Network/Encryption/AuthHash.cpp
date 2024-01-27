@@ -19,13 +19,13 @@ SAuthHash::~SAuthHash()
 
 void SAuthHash::Update(std::string in) const
 {
-    OPTICK_EVENT();
+    MCPP_PROFILE_SCOPE()
     EVP_DigestUpdate(m_pCtx, in.data(), in.size());
 }
 
 std::string SAuthHash::Finalise() const
 {
-    OPTICK_EVENT();
+    MCPP_PROFILE_SCOPE()
 
     auto result = std::string();
 

@@ -9,6 +9,8 @@
     pchheader "pch.h"
     pchsource "pch.cpp"
     
+    vectorextensions "AVX2"
+    
     defines { "CURL_STATICLIB" }
     
     includedirs {
@@ -18,7 +20,6 @@
         "../Core",
         "%{IncludeDir.spdlog}",
         "%{IncludeDir.optick}",
-        "%{IncludeDir.curl}",
         "%{IncludeDir.curlcpp}",
         "%{IncludeDir.concurrentqueues}"
     }
@@ -37,6 +38,10 @@
         system "windows"
         architecture "x64"
         toolset "msc"
+        
+        includedirs {
+            "%{IncludeDir.curl}",
+        }
     
     filter { "platforms:Linux" }
         system "linux"

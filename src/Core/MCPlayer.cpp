@@ -16,7 +16,6 @@
 #include "IGlobalEnvironment.h"
 #include "PacketUtils.h"
 #include "Packets/PacketReader.h"
-#include "Packets/PacketSizeCalc.h"
 #include "Packets/Login/LoginSuccess.h"
 
 // TODO do something better than this
@@ -24,25 +23,25 @@
 
 void CMCPlayer::NetworkTick()
 {
-    OPTICK_EVENT();
+    MCPP_PROFILE_SCOPE()
 
     bool success = m_pConnection->RecvPackets(this);
-    if(!success)
+    if (!success)
         MCLog::warn("Failure to recv packets needs to be implemented");
 }
 
 bool CMCPlayer::ProcessPacket(SPacketPayload&& payload)
 {
-    OPTICK_EVENT();
+    MCPP_PROFILE_SCOPE()
 
     switch (m_state)
     {
     case EClientState::eCS_Handshake:
         return HandleHandshake(std::move(payload));
-        
+
     case EClientState::eCS_Login:
         return HandleLogin(std::move(payload));
-        
+
     case EClientState::eCS_Status:
         return HandleStatus(std::move(payload));
 
@@ -69,7 +68,7 @@ const std::string& CMCPlayer::GetRemoteAddress() const
 
 bool CMCPlayer::HandleHandshake(SPacketPayload&& payload)
 {
-    OPTICK_EVENT();
+    MCPP_PROFILE_SCOPE()
 
     SHandshake handshake;
 
@@ -78,11 +77,13 @@ bool CMCPlayer::HandleHandshake(SPacketPayload&& payload)
 
     if (handshake.m_protocolVersion != PROTOCOL_VERSION)
         return false;
-            
-    switch(handshake.m_nextState)
+
+    switch (handshake.m_nextState)
     {
-    case 1: m_state = EClientState::eCS_Status; break;
-    case 2: m_state = EClientState::eCS_Login; break;
+    case 1: m_state = EClientState::eCS_Status;
+        break;
+    case 2: m_state = EClientState::eCS_Login;
+        break;
     default:
         MCLog::error("Incorrect next state in handshake. NextState[{}]", handshake.m_nextState);
         return false;
@@ -93,26 +94,28 @@ bool CMCPlayer::HandleHandshake(SPacketPayload&& payload)
 
 bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
 {
-    OPTICK_EVENT();
+    MCPP_PROFILE_SCOPE()
 
-    if(payload.m_packetId == 0)
+    if (payload.m_packetId == 0)
     {
-        MCLog::debug("Received login start. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
-        
+        MCLog::debug("Received login start. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(),
+                     GetUsername());
+
         SLoginStart loginStart;
         CPacketReader reader(payload.m_payload);
         loginStart.Serialize(reader);
 
         m_username = loginStart.m_username;
         m_uuid = loginStart.m_uuid;
-        
+
         MCLog::debug("User from {} is {}", m_pConnection->GetRemoteAddress(), GetUsername());
 
         // If we're online we want to encrypt the connection
         if (IGlobalEnvironment::Get()->IsOnline())
         {
             SendEncryptionRequest();
-            MCLog::debug("Sent encryption request. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
+            MCLog::debug("Sent encryption request. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(),
+                         GetUsername());
             return true;
         }
 
@@ -126,29 +129,34 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
 
     if (payload.m_packetId == 1)
     {
-        MCLog::debug("Received encryption response. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
+        MCLog::debug("Received encryption response. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(),
+                     GetUsername());
 
         const std::shared_ptr<IRSAKeyPair> pKey = IGlobalEnvironment::Get()->GetNetwork()->GetServerKeyPair();
-        
+
         SEncryptionResponse response;
         response.m_pServerKey = pKey;
 
         CPacketReader reader(payload.m_payload);
         response.Serialize(reader);
 
-        MCLog::debug("Deserialized encryption response. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
-        
+        MCLog::debug("Deserialized encryption response. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(),
+                     GetUsername());
+
         if (response.m_verifyTokenValue != m_verifyToken)
             return false;
-        
+
         m_pConnection->EnableEncryption();
         m_pConnection->SetAESKey(response.m_sharedSecret);
-        
-        MCLog::debug("Enabled encryption. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
-        MCLog::debug("Beginning authentication with mojang. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
 
-        std::string digest = IGlobalEnvironment::Get()->GetNetwork()->GenerateHexDigest(pKey->GetAsnDerKey(), response.m_sharedSecret);
-        MCLog::debug("Generated digest. Digest[{}] Address[{}] Username[{}]", digest, m_pConnection->GetRemoteAddress(), GetUsername());        
+        MCLog::debug("Enabled encryption. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
+        MCLog::debug("Beginning authentication with mojang. Address[{}] Username[{}]",
+                     m_pConnection->GetRemoteAddress(), GetUsername());
+
+        std::string digest = IGlobalEnvironment::Get()->GetNetwork()->GenerateHexDigest(
+            pKey->GetAsnDerKey(), response.m_sharedSecret);
+        MCLog::debug("Generated digest. Digest[{}] Address[{}] Username[{}]", digest, m_pConnection->GetRemoteAddress(),
+                     GetUsername());
 
         std::string url("https://sessionserver.mojang.com/session/minecraft/hasJoined?username=");
         url.append(GetUsername());
@@ -157,47 +165,51 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
 
         // TODO send over the ip if we want to prevent proxy connections
 
-        IGlobalEnvironment::Get()->GetCurl()->QueueHttpGet(url, [this](bool success, std::string body) {
-            OPTICK_EVENT();
-
-            nlohmann::json jsonBody = nlohmann::json::parse(body);
-
-            std::string id;
-            jsonBody["id"].get_to(id);
-
-            SLoginSuccess request;
-            request.m_id = CUUID::fromStrFactory(ConvertSlimToFullUUID(id));
-            request.m_username = GetUsername();
-
-            nlohmann::json props = jsonBody["properties"];
-            if(props.is_array())
+        IGlobalEnvironment::Get()->GetCurl()->QueueHttpGet(
+            url, [this, username = GetUsername()](bool success, std::string body)
             {
-                for (int i = 0; i < props.size(); i++)
+                MCPP_PROFILE_SCOPE()
+
+                nlohmann::json jsonBody = nlohmann::json::parse(body);
+
+                std::string id;
+                jsonBody["id"].get_to(id);
+
+                SLoginSuccess request;
+                request.m_id = CUUID::fromStrFactory(ConvertSlimToFullUUID(id));
+                request.m_username = username;
+
+                nlohmann::json props = jsonBody["properties"];
+                if (props.is_array())
                 {
-                    nlohmann::json prop = props[i];
-                    SLoginSuccess::SProperty finalProp;
-                    prop["name"].get_to(finalProp.m_name);
-                    prop["value"].get_to(finalProp.m_value);
-                    if (prop.contains("signature"))
+                    for (int i = 0; i < props.size(); i++)
                     {
-                        finalProp.m_signed = true;
-                        prop["signature"].get_to(finalProp.m_signature);
+                        nlohmann::json prop = props[i];
+                        SLoginSuccess::SProperty finalProp;
+                        prop["name"].get_to(finalProp.m_name);
+                        prop["value"].get_to(finalProp.m_value);
+                        if (prop.contains("signature"))
+                        {
+                            finalProp.m_signed = true;
+                            prop["signature"].get_to(finalProp.m_signature);
+                        }
+
+                        request.m_properties.push_back(finalProp);
                     }
-
-                    request.m_properties.push_back(finalProp);
                 }
-            }
 
-            MCLog::debug("Sending LoginSuccess. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
-            m_pConnection->QueuePacket(SerializePacket(request));
-        });
+                MCLog::debug("Sending LoginSuccess. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(),
+                             GetUsername());
+                m_pConnection->QueuePacket(SerializePacket(request));
+            });
 
-        MCLog::debug("Queued authentication request. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(), GetUsername());
-        
+        MCLog::debug("Queued authentication request. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(),
+                     GetUsername());
+
         return true;
     }
 
-    if(payload.m_packetId == 3)
+    if (payload.m_packetId == 3)
     {
         MCLog::debug("Received login ack. Username[{}] UUID[{}]", m_username, m_uuid.str());
         m_state = EClientState::eCS_Configuration;
@@ -211,9 +223,9 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
 
 bool CMCPlayer::HandleStatus(SPacketPayload&& payload)
 {
-    OPTICK_EVENT();
+    MCPP_PROFILE_SCOPE()
 
-    if(payload.m_packetId == 0)
+    if (payload.m_packetId == 0)
     {
         SStatusResponse response;
 
@@ -221,29 +233,29 @@ bool CMCPlayer::HandleStatus(SPacketPayload&& payload)
         response.m_body = {
             {
                 "version", {
-                            {"name", "1.20.4"},
-                            {"protocol", 765}
+                    {"name", "1.20.4"},
+                    {"protocol", 765}
                 }
             },
             {
                 "players", {
-                            { "max", 10000 },
-                            { "online", 0 }
+                    {"max", 10000},
+                    {"online", 0}
                 }
             },
             {
                 "description", {
-                            { "text", "MCPP Server" }
+                    {"text", "MCPP Server"}
                 }
             },
             {"enforceSecureChat", true},
             {"previewsChat", true}
         };
-        
+
         m_pConnection->QueuePacket(SerializePacket(response));
     }
 
-    if(payload.m_packetId == 1)
+    if (payload.m_packetId == 1)
     {
         payload.m_size = payload.m_size + 2;
         m_pConnection->QueuePacket(std::move(payload));
@@ -253,11 +265,11 @@ bool CMCPlayer::HandleStatus(SPacketPayload&& payload)
 
 bool CMCPlayer::SendEncryptionRequest()
 {
-    OPTICK_EVENT();
+    MCPP_PROFILE_SCOPE()
 
     SEncryptionRequest request;
     std::string publicKey = IGlobalEnvironment::Get()->GetNetwork()->GetServerKeyPair()->GetAsnDerKey();
-        
+
     request.m_publicKeyLength = static_cast<uint32_t>(publicKey.size());
     request.m_publicKey = std::move(publicKey);
 
@@ -265,14 +277,14 @@ bool CMCPlayer::SendEncryptionRequest()
 
     std::random_device random_device;
     std::mt19937 generator(random_device());
-    const std::uniform_int_distribution<> distribution(0, static_cast<int>(CHARACTERS.size()) - 1);
+    std::uniform_int_distribution<> distribution(0, static_cast<int>(CHARACTERS.size()) - 1);
 
     for (std::size_t i = 0; i < 64; ++i)
         m_verifyToken += CHARACTERS[distribution(generator)];
 
     request.m_verifyTokenLength = static_cast<uint32_t>(m_verifyToken.size());
     request.m_verifyToken = m_verifyToken;
-    
+
     m_pConnection->QueuePacket(SerializePacket(request));
 
     return true;

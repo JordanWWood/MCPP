@@ -12,21 +12,17 @@
 #include "Packets/PacketReader.h"
 #include "Packets/PacketSizeCalc.h"
 
-#ifdef _WIN32
-#include <WinSock2.h>
-#endif
-
 #define DEFAULT_BUFLEN 512
 
 CClientConnection::~CClientConnection()
 {
     if(m_clientSocket != INVALID_SOCKET)
-        closesocket(m_clientSocket);
+        CLOSE_SOCKET(m_clientSocket);
 }
 
 bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
 {
-    OPTICK_EVENT();
+    MCPP_PROFILE_SCOPE()
 
     char recvBuffer[DEFAULT_BUFLEN];
     constexpr int recvBufferLength{ DEFAULT_BUFLEN };
@@ -67,7 +63,7 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
             {
                 MCLog::warn("Error processing packet. Disconnecting connection. PacketId[{}] Address[{}]", packetId, GetRemoteAddress().c_str());
                
-                closesocket(m_clientSocket);
+                CLOSE_SOCKET(m_clientSocket);
                 m_socketState = ESocketState::eSS_CLOSED;
                 m_clientSocket = INVALID_SOCKET;
                 break;
@@ -81,13 +77,18 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
     if (iResult == 0)
     {
         MCLog::debug("Client disconnected. Address[{}]", GetRemoteAddress());
-        closesocket(m_clientSocket);
+        CLOSE_SOCKET(m_clientSocket);
         m_socketState = ESocketState::eSS_CLOSED;
         return true;
     }
 
-    const int error = WSAGetLastError();
+    const int error = GET_SOCKET_ERR();
+    
+#if defined(_WIN32)
     if(error == WSAEWOULDBLOCK)
+#else
+    if(error == SOCK_NONBLOCK)
+#endif
     {
         // We're just waiting for something to receive. Break and we'll check if theres something next time
         return true;
@@ -96,7 +97,7 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
     // If we make it here something went wrong
     MCLog::error("Failed to receive packets from client. Error[{}] Address[{}]", error, GetRemoteAddress());
     
-    closesocket(m_clientSocket);
+    CLOSE_SOCKET(m_clientSocket);
     m_socketState = ESocketState::eSS_CLOSED;
     
     return false;
@@ -104,13 +105,13 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
 
 void CClientConnection::QueuePacket(SPacketPayload&& payload)
 {
-    OPTICK_EVENT();
+    MCPP_PROFILE_SCOPE()
     m_queuedSends.enqueue(std::move(payload));
 }
 
 bool CClientConnection::SendQueuedPackets()
 {
-    OPTICK_EVENT();
+    MCPP_PROFILE_SCOPE()
     
     SPacketPayload payload;
     while(m_queuedSends.try_dequeue(payload))
@@ -128,10 +129,10 @@ bool CClientConnection::SendQueuedPackets()
     
         if (iResult == SOCKET_ERROR)
         {
-            MCLog::error("Failed to send payload to client. Error[{}] Address[{}]", WSAGetLastError(), GetRemoteAddress());
+            MCLog::error("Failed to send payload to client. Error[{}] Address[{}]", GET_SOCKET_ERR(), GetRemoteAddress());
 
             m_socketState = ESocketState::eSS_CLOSED;
-            closesocket(m_clientSocket);
+            CLOSE_SOCKET(m_clientSocket);
             return false;
         }
     }
@@ -141,7 +142,7 @@ bool CClientConnection::SendQueuedPackets()
 
 SPacketPayload CClientConnection::ReadUnencryptedPacket(char* start, uint32_t maxSize)
 {
-    OPTICK_EVENT()
+    MCPP_PROFILE_SCOPE()
     
     CPacketReader reader(start);
     int payloadSize = 0;

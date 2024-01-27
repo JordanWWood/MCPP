@@ -11,30 +11,33 @@ CTCPServer::CTCPServer(const uint16_t port)
 CTCPServer::~CTCPServer()
 {
     if (m_listenSocket != INVALID_SOCKET)
-        closesocket(m_listenSocket);
+        CLOSE_SOCKET(m_listenSocket);
 
+#ifdef _WIN32
     WSACleanup();
+#endif
 }
 
 bool CTCPServer::Listen()
 {
-    OPTICK_EVENT();
-
-#ifdef _WIN32
-    WSADATA wsaData;
+    MCPP_PROFILE_SCOPE()
+    
     int iResult;
 
     addrinfo *result = nullptr;
     addrinfo hints;
 
+#ifdef _WIN32
+    WSADATA wsaData;
     iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
     if(iResult != 0)
     {
         // TODO Logging
         return false;
     }
+#endif
 
-    ZeroMemory(&hints, sizeof(hints));
+    memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
@@ -46,7 +49,7 @@ bool CTCPServer::Listen()
         m_listenSocketState = ESocketState::eSS_INVALID_ADDR;
 
         MCLog::error("Error retrieving address info while creating listen socket");
-        WSACleanup();
+        CLEANUP_NETWORK();
         return false;
     }
     
@@ -56,17 +59,29 @@ bool CTCPServer::Listen()
         m_listenSocketState = ESocketState::eSS_INVALID;
 
         MCLog::error("Error retrieving address info while creating listen socket");
-        WSACleanup();
+        CLEANUP_NETWORK();
         return false;
     }
 
+#ifdef _WIN32
     u_long iMode = 1;
     if(ioctlsocket(m_listenSocket, FIONBIO, &iMode) != 0)
+#else
+    int flags = fcntl(m_listenSocket, F_GETFL, 0);
+    if (flags == -1)
     {
-        closesocket(m_listenSocket);
+        MCLog::error("Failed to get flags for socket with error code {}", GET_SOCKET_ERR());
+        CLEANUP_NETWORK();
+        return false;
+    }
+    flags = (flags | O_NONBLOCK);
+    if(fcntl(m_listenSocket, F_SETFL, flags) == 0)
+#endif
+    {
+        CLOSE_SOCKET(m_listenSocket);
         
-        MCLog::error("Failed to change listen socket mode to non-blocking with error code {}", WSAGetLastError());
-        WSACleanup();
+        MCLog::error("Failed to change listen socket mode to non-blocking with error code {}", GET_SOCKET_ERR());
+        CLEANUP_NETWORK();
         return false;
     }
 
@@ -75,9 +90,9 @@ bool CTCPServer::Listen()
     {
         m_listenSocketState = ESocketState::eSS_BIND_ERROR;
         
-        MCLog::error("Failed to bind to port {} with error code {}", m_port, WSAGetLastError());
-        closesocket(m_listenSocket);
-        WSACleanup();
+        MCLog::error("Failed to bind to port {} with error code {}", m_port, GET_SOCKET_ERR());
+        CLOSE_SOCKET(m_listenSocket);
+        CLEANUP_NETWORK();
         return false;
     }
 
@@ -88,23 +103,22 @@ bool CTCPServer::Listen()
     {
         m_listenSocketState = ESocketState::eSS_LISTEN_ERROR;
         
-        MCLog::error("Failed to listen on port {} with error code {}", m_port, WSAGetLastError());
-        closesocket(m_listenSocket);
-        WSACleanup();
+        MCLog::error("Failed to listen on port {} with error code {}", m_port, GET_SOCKET_ERR());
+        CLOSE_SOCKET(m_listenSocket);
+        CLEANUP_NETWORK();
         return false;
     }
 
     MCLog::info("Successfully started listening on {}", m_port);
 
     m_listenSocketState = ESocketState::eSS_LISTEN;
-#endif
 
     return true;
 }
 
 IConnectionPtr CTCPServer::AcceptConnection() const
 {
-    OPTICK_EVENT();
+    MCPP_PROFILE_SCOPE();
 
     sockaddr_in sa = { 0 }; /* for TCP/IP */
     socklen_t socklen = sizeof sa;
@@ -112,12 +126,13 @@ IConnectionPtr CTCPServer::AcceptConnection() const
     SOCKET socket = accept(m_listenSocket, reinterpret_cast<struct sockaddr*>(&sa), &socklen);
     if(socket == INVALID_SOCKET)
     {
-        if(WSAGetLastError() == WSAEWOULDBLOCK)
+        
+        if(GET_SOCKET_ERR() == WOULD_BLOCK)
             return nullptr;
 
-        MCLog::error("Failed to accept new client connect with error {}", WSAGetLastError());
+        MCLog::error("Failed to accept new client connect with error {}", GET_SOCKET_ERR());
 
-        closesocket(m_listenSocket);
+        CLOSE_SOCKET(m_listenSocket);
         return nullptr;
     }
 

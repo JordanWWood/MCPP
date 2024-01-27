@@ -1,5 +1,12 @@
 ﻿#include "PacketWriter.h"
 
+#include <cstring>
+
+CPacketWriter::CPacketWriter(uint32_t size): m_data(new char[size])
+{
+    std::memset(m_data, 0, size);
+}
+
 void CPacketWriter::OnShort(uint16_t& value)
 {
     // TODO
@@ -25,7 +32,7 @@ void CPacketWriter::OnVarInt(int& value)
 void CPacketWriter::OnULong(uint64_t& value)
 {
     constexpr int size = sizeof(uint64_t);
-    memcpy(m_data + m_size, &value, size);
+    std::memcpy(m_data + m_size, &value, size);
     m_size += size;
 }
 

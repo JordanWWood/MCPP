@@ -8,6 +8,8 @@ project "Core"
     
     pchheader "pch.h"
     pchsource "pch.cpp"
+    
+    vectorextensions "AVX2"
 
     includedirs {
         "%{wks.location}/src/Common",

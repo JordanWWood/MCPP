@@ -7,7 +7,7 @@
 
 unsigned char* CSharedSecret::DecryptPacket(unsigned char* start, int length) const
 {
-    OPTICK_EVENT();
+    MCPP_PROFILE_SCOPE()
     
     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
     EVP_DecryptInit_ex(ctx, EVP_aes_128_cfb8(), nullptr, reinterpret_cast<const unsigned char*>(m_secret.c_str()),
@@ -30,7 +30,7 @@ unsigned char* CSharedSecret::DecryptPacket(unsigned char* start, int length) co
 
 unsigned char* CSharedSecret::EncryptPacket(unsigned char* start, int length, int& outCipherLength) const
 {
-    OPTICK_EVENT();
+    MCPP_PROFILE_SCOPE()
     
     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
     EVP_EncryptInit_ex(ctx, EVP_aes_128_cfb8(), nullptr, reinterpret_cast<const unsigned char*>(m_secret.c_str()),

@@ -9,7 +9,7 @@
 
 int main(int argc, char** argv)
 {
-    OPTICK_THREAD("Main Thread");
+    OPTICK_THREAD("Main Thread")
 
     // Set up logging
     spdlog::init_thread_pool(8192, 1, [](){ Optick::RegisterThread("Logger"); }, [](){ Optick::UnRegisterThread(false); });

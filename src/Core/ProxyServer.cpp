@@ -1,13 +1,13 @@
 ﻿#include "pch.h"
 
-#include "MCServer.h"
+#include "ProxyServer.h"
 #include "MCPlayer.h"
 
 #include "IGlobalEnvironment.h"
 
-bool CMCServer::Init()
+bool CProxyServer::Init()
 {
-    OPTICK_EVENT();
+    MCPP_PROFILE_SCOPE()
 
     IGlobalEnvironment::Get()->GetNetwork()->RegisterConnectionCallback(this, [this](const IConnectionPtr& pConnection) {
         std::lock_guard lock(m_playerLock);
@@ -18,9 +18,9 @@ bool CMCServer::Init()
     return true;
 }
 
-bool CMCServer::Run()
+bool CProxyServer::Run()
 {
-    OPTICK_EVENT();
+    MCPP_PROFILE_SCOPE()
 
     {
         std::lock_guard lock(m_playerLock);

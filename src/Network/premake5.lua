@@ -9,6 +9,8 @@ project "Network"
     pchheader "pch.h"
     pchsource "pch.cpp"
     
+    vectorextensions "AVX2"
+    
     defines { "CURL_STATICLIB" }
     
     includedirs {

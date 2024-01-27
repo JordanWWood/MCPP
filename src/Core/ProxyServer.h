@@ -11,7 +11,7 @@
 
 struct ITCPServer;
 
-class CMCServer : public IServer
+class CProxyServer : public IServer
 {
 public:
     /////////////////////////////////////////////////////////////////////

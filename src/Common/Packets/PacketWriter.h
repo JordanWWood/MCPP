@@ -4,10 +4,7 @@
 class CPacketWriter : public IPacketVisitor
 {
 public:
-    CPacketWriter(uint32_t size) : m_data(new char[size])
-    {
-        memset(m_data, 0, size);
-    }
+    CPacketWriter(uint32_t size);
 
     bool SizeFirst() const override { return true; }
     char* GetData() const { return m_data; }

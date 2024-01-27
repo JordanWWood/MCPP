@@ -11,7 +11,7 @@ CRSAKeyPair::~CRSAKeyPair()
 
 bool CRSAKeyPair::Initialise()
 {
-    OPTICK_EVENT();
+    MCPP_PROFILE_SCOPE()
     constexpr int bits = 1024;
     
     BIGNUM* bne = BN_new();
@@ -64,7 +64,7 @@ bool CRSAKeyPair::Initialise()
 
 std::string CRSAKeyPair::Encrypt(std::string& input) const
 {
-    OPTICK_EVENT();
+    MCPP_PROFILE_SCOPE()
     
     // Convert string to unsigned char buffer
     const unsigned char* inputData = reinterpret_cast<const unsigned char*>(input.c_str());
@@ -116,7 +116,7 @@ std::string CRSAKeyPair::Encrypt(std::string& input) const
 
 std::string CRSAKeyPair::Decrypt(std::string& input) const
 {
-    OPTICK_EVENT();
+    MCPP_PROFILE_SCOPE()
     
     // Convert string to unsigned char buffer
     const unsigned char* inputData = reinterpret_cast<const unsigned char*>(input.c_str());

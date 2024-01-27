@@ -6,8 +6,11 @@ project "Common"
     
     cppdialect "C++20"
     
+    vectorextensions "AVX2"
+    
     includedirs {
-        "%{wks.location}/src/Common"
+        "%{wks.location}/src/Common",
+        "%{IncludeDir.optick}",
     }
     
     files { "**.cpp", "**.h" }

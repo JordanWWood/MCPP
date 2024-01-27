@@ -3,7 +3,7 @@
 #include "System.h"
 
 #include "CurlProcessor.h"
-#include "MCServer.h"
+#include "ProxyServer.h"
 #include "Network.h"
 
 #define MAIN_THREAD_UPDATE_RATE 20
@@ -17,7 +17,7 @@ bool CSystem::Init()
     m_pCurlProcessor = std::make_unique<CCurlProcessor>();
     m_globalEnvironment.SetCurl(m_pCurlProcessor.get());
 
-    m_pServer = std::make_unique<CMCServer>();
+    m_pServer = std::make_unique<CProxyServer>();
     return m_pServer->Init();
 }
 
@@ -28,6 +28,8 @@ bool CSystem::Run()
     while (true)
     {
         OPTICK_FRAME("Main Thread");
+        if(m_pNetwork->HasShutdown())
+            return false;
         
         // TODO Network Main Thread Start
         
@@ -37,7 +39,7 @@ bool CSystem::Run()
         // TODO Network Main Thread End
 
         // Frame synchronisation
-        OPTICK_EVENT("Sync Frame");
+        MCPP_PROFILE_NAMED_SCOPE("Sync Frame");
         OPTICK_TAG("FPS", MAIN_THREAD_UPDATE_RATE);
         std::this_thread::sleep_until(nextFrame);
         nextFrame += TMainThreadFrame{1};

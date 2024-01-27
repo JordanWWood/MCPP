@@ -12,9 +12,11 @@
         "curlcpp",
         "Network", 
         "Core",
-        "System",
-        "Common"
+        "Common",
+        "System"
     }
+    
+    vectorextensions "AVX2"
     
     defines { "CURL_STATICLIB", "MT_INSTRUMENTED_BUILD" }
     cppdialect "C++20"
@@ -22,6 +24,7 @@
     includedirs {
         "%{wks.location}/src/Common",
         "%{wks.location}/src/System",
+        "%{wks.location}/src/Network",
         "%{IncludeDir.spdlog}",
         "%{IncludeDir.optick}",
         "%{IncludeDir.curlcpp}",
@@ -52,8 +55,8 @@
     filter { "platforms:Linux" }
         system "linux"
         architecture "x64"
-        toolset "gcc"
-
+        linkgroups "on"
+        toolset "clang"
         links {
-            "libcurl.so"
+            "%{Library.curl}"
         }

@@ -36,7 +36,7 @@ void CCurlProcessor::ThreadUpdate()
         SQueuedRequest request;
         if (m_workQueue.try_dequeue(request))
         {
-            OPTICK_EVENT("Push New Requests to Curl Multi");
+            MCPP_PROFILE_NAMED_SCOPE("Push New Requests to Curl Multi");
             auto *outputStream = new std::ostringstream;
             std::unique_ptr<curl::curl_ios<std::ostringstream>> curlStream = std::make_unique<curl::curl_ios<std::ostringstream>>(*outputStream);
             std::unique_ptr<curl::curl_easy> easy = std::make_unique<curl::curl_easy>(*curlStream.get());
@@ -58,7 +58,7 @@ void CCurlProcessor::ThreadUpdate()
         }
         
         {
-            OPTICK_EVENT("Perform Requests");
+            MCPP_PROFILE_NAMED_SCOPE("Perform Requests");
             m_multiHandle.perform();
 
             while(std::unique_ptr<curl::curl_multi::curl_message> message = m_multiHandle.get_next_finished())
@@ -89,7 +89,7 @@ void CCurlProcessor::ThreadUpdate()
         }
 
         {
-            OPTICK_EVENT("Sleep");
+            MCPP_PROFILE_NAMED_SCOPE("Sleep");
             std::this_thread::sleep_until(nextFrame);
             nextFrame += TCurlThreadFrame{1};
         }

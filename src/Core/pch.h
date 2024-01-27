@@ -6,5 +6,6 @@
 
 #include <optick.h>
 #include <spdlog/spdlog.h>
+#include <Platform.h>
 
 namespace MCLog = ::spdlog;
