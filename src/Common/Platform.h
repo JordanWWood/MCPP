@@ -7,7 +7,7 @@
 // Sockets
 #if !defined(_WIN32)
 #define SOCKET int
-#define INVALID_SOCKET 0
+#define INVALID_SOCKET -1
 #define SOCKET_ERROR -1
 #define WOULD_BLOCK EWOULDBLOCK
 #define CLOSE_SOCKET(s) close(s)

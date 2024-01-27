@@ -75,7 +75,7 @@ bool CTCPServer::Listen()
         return false;
     }
     flags = (flags | O_NONBLOCK);
-    if(fcntl(m_listenSocket, F_SETFL, flags) == 0)
+    if(fcntl(m_listenSocket, F_SETFL, flags) != 0)
 #endif
     {
         CLOSE_SOCKET(m_listenSocket);
@@ -126,7 +126,6 @@ IConnectionPtr CTCPServer::AcceptConnection() const
     SOCKET socket = accept(m_listenSocket, reinterpret_cast<struct sockaddr*>(&sa), &socklen);
     if(socket == INVALID_SOCKET)
     {
-        
         if(GET_SOCKET_ERR() == WOULD_BLOCK)
             return nullptr;
 

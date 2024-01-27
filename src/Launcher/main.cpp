@@ -20,7 +20,7 @@ int main(int argc, char** argv)
     spdlog::register_logger(logger);
     spdlog::set_default_logger(logger);
 
-#ifdef _DEBUG
+#ifdef DEBUG
     spdlog::set_level(spdlog::level::debug);
 #endif
 
