@@ -1,8 +1,7 @@
-isVisualStudio = false
-
-if _ACTION == "vs2010" or _ACTION == "vs2012" or _ACTION == "vs2015" or _ACTION == "vs2017" or _ACTION == "vs2022" then
-	isVisualStudio = true
-end
+newoption {
+   trigger = "with_premake_project",
+   description = "Optionally generate an extra project for premake so projects can be regenerated from within an IDE"
+}
 
 include "dependencies.lua"
 
@@ -13,6 +12,7 @@ workspace "MCPP"
     startproject "Launcher"
     defaultplatform "Linux"
 
+if _OPTIONS["with_premake_project"] then
 project "Premake"
 	kind "Utility"
 
@@ -24,8 +24,9 @@ project "Premake"
 
 	postbuildmessage "Regenerating project files with Premake5!"
 	postbuildcommands {
-		"%{wks.location}/premake5.exe %{_ACTION} --file=\"%{wks.location}premake5.lua\""
+		"%{wks.location}/premake5.exe --with_premake_project %{_ACTION} --file=\"%{wks.location}premake5.lua\""
 	}
+end
 
 group "MCPP"
     include "src/Common"

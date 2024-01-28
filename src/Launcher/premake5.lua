@@ -1,6 +1,7 @@
 ﻿project "Launcher"
     kind "ConsoleApp"
     language "C++"
+    targetname "MCPP"
     targetdir "%{wks.location}/bin64/%{cfg.buildcfg}"
     objdir "%{wks.location}/obj/%{cfg.platform}_%{cfg.buildcfg}"
     
@@ -56,7 +57,7 @@
         system "linux"
         architecture "x64"
         linkgroups "on"
-        toolset "clang"
+        toolset "gcc"
         links {
             "%{Library.curl}"
         }

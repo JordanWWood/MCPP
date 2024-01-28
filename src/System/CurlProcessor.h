@@ -2,7 +2,7 @@
 
 #include <ICurlProcessor.h>
 
-#include <ConcurrentQueue.h>
+#include <concurrentqueue.h>
 #include <curl_easy.h>
 #include <curl_multi.h>
 #include <curl/curl.h>

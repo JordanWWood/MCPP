@@ -5,7 +5,7 @@
 #include "Encryption/SharedSecret.h"
 #include "PacketPayload.h"
 
-#include <ConcurrentQueue.h>
+#include <concurrentqueue.h>
 
 
 class CClientConnection : public IConnection

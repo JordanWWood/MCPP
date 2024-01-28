@@ -1,5 +1,8 @@
 name: C/C++ CI
 
+env: 
+  VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+
 on:
   push:
     branches: [ "main" ]
@@ -7,15 +10,41 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
-
+  build-linux-dev:
     runs-on: ubuntu-latest
-
+    container: gcc:13
+    strategy:
+      fail-fast: false
     steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: "recursive"
     - uses: abel0b/setup-premake@v2.3
       with:
         version: "5.0.0-beta2"
-    - name: configure
-      run: ./configure
-    - name: make
+    - run: apt update && apt install -y libssl-dev libcurl4-openssl-dev
+    - run: premake5 gmake
+    - name: Build Dev
       run: make
+  build-windows-dev:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+      - name: Export GitHub Actions cache environment variables
+        uses: actions/github-script@v6
+        with:
+          script: |
+           core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+           core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+      - uses: abel0b/setup-premake@v2.3
+        with:
+          version: "5.0.0-beta2"
+      - run: vcpkg install openssl
+      - run: premake5 vs2022
+      - uses: microsoft/setup-msbuild@v1.1
+      - run: msbuild MCPP.sln /p:Configuration=Debug /property:Platform=Win64
+      
