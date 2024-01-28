@@ -8,7 +8,7 @@ IncludeDir["curlcpp"] = "%{wks.location}/vendor/curlcpp/include"
 IncludeDir["zlib"] = "%{wks.location}/vendor/zlib"
 
 if _ACTION ~= "gmake" then
-    OpenSSLPath = os.getenv("VCPKG_INSTALLATION_ROOT") .. "/packages/openssl_x64-windows"
+    OpenSSLPath = os.getenv("VCPKG_INSTALLATION_ROOT") .. "/packages/openssl_x64-windows-static"
     
     IncludeDir["openssl"] = OpenSSLPath .. "/include"
     IncludeDir["curl"] = "%{wks.location}/vendor/curl/include"

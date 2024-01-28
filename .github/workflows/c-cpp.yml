@@ -43,7 +43,7 @@ jobs:
       - uses: abel0b/setup-premake@v2.3
         with:
           version: "5.0.0-beta2"
-      - run: vcpkg install openssl
+      - run: vcpkg install openssl:x64-windows-static
       - run: premake5 vs2022
       - uses: microsoft/setup-msbuild@v1.1
       - run: msbuild MCPP.sln /p:Configuration=Debug /property:Platform=Win64
