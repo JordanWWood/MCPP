@@ -83,12 +83,7 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
     }
 
     const int error = GET_SOCKET_ERR();
-    
-#if defined(_WIN32)
-    if(error == WSAEWOULDBLOCK)
-#else
-    if(error == SOCK_NONBLOCK)
-#endif
+    if(error == WOULD_BLOCK)
     {
         // We're just waiting for something to receive. Break and we'll check if theres something next time
         return true;

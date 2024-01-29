@@ -10,6 +10,7 @@ project "Common"
     
     includedirs {
         "%{wks.location}/src/Common",
+        "%{IncludeDir.openssl}",
         "%{IncludeDir.optick}",
     }
     

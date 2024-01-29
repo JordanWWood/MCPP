@@ -19,3 +19,6 @@
 [submodule "vendor/concurrentqueues"]
 	path = vendor/concurrentqueues
 	url = https://github.com/cameron314/concurrentqueue.git
+[submodule "vendor/tomlplusplus"]
+	path = vendor/tomlplusplus
+	url = https://github.com/marzer/tomlplusplus.git

@@ -11,7 +11,7 @@
     
     vectorextensions "AVX2"
     
-    defines { "CURL_STATICLIB" }
+    defines { "CURL_STATICLIB", "TOML_EXCEPTIONS=0" }
     
     includedirs {
         "../System",
@@ -19,9 +19,11 @@
         "../Network",
         "../Core",
         "%{IncludeDir.spdlog}",
+        "%{IncludeDir.openssl}",
         "%{IncludeDir.optick}",
         "%{IncludeDir.curlcpp}",
-        "%{IncludeDir.concurrentqueues}"
+        "%{IncludeDir.concurrentqueues}",
+        "%{IncludeDir.toml}"
     }
     
     files { "**.h", "**.cpp" }

@@ -9,8 +9,8 @@
 class CNetwork final : public INetwork
 {
 public:
-    CNetwork();
-    ~CNetwork();
+    CNetwork(uint16_t hostPort);
+    ~CNetwork() override;
 
     /////////////////////////////////////////////////////////////////////
     // INetwork

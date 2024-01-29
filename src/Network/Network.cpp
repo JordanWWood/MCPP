@@ -16,8 +16,8 @@ static void NetworkThread(CNetwork* instance)
     instance->NetworkTick();
 }
 
-CNetwork::CNetwork()
-    : m_tcpServer(25565)
+CNetwork::CNetwork(uint16_t hostPort)
+    : m_tcpServer(hostPort)
 {
     m_networkThread = std::thread(NetworkThread, this);
 

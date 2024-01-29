@@ -132,7 +132,7 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
         MCLog::debug("Received encryption response. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(),
                      GetUsername());
 
-        const std::shared_ptr<IRSAKeyPair> pKey = IGlobalEnvironment::Get()->GetNetwork()->GetServerKeyPair();
+        const std::shared_ptr<IRSAKeyPair> pKey = IGlobalEnvironment::Get()->GetNetwork().lock()->GetServerKeyPair();
 
         SEncryptionResponse response;
         response.m_pServerKey = pKey;
@@ -153,7 +153,7 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
         MCLog::debug("Beginning authentication with mojang. Address[{}] Username[{}]",
                      m_pConnection->GetRemoteAddress(), GetUsername());
 
-        std::string digest = IGlobalEnvironment::Get()->GetNetwork()->GenerateHexDigest(
+        std::string digest = IGlobalEnvironment::Get()->GetNetwork().lock()->GenerateHexDigest(
             pKey->GetAsnDerKey(), response.m_sharedSecret);
         MCLog::debug("Generated digest. Digest[{}] Address[{}] Username[{}]", digest, m_pConnection->GetRemoteAddress(),
                      GetUsername());
@@ -165,12 +165,12 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
 
         // TODO send over the ip if we want to prevent proxy connections
 
-        IGlobalEnvironment::Get()->GetCurl()->QueueHttpGet(
+        IGlobalEnvironment::Get()->GetCurl().lock()->QueueHttpGet(
             url, [this, username = GetUsername()](bool success, std::string body)
             {
                 MCPP_PROFILE_SCOPE()
 
-                nlohmann::json jsonBody = nlohmann::json::parse(body);
+                nlohmann::json jsonBody = nlohmann::json::parse(body);  
 
                 std::string id;
                 jsonBody["id"].get_to(id);
@@ -268,7 +268,7 @@ bool CMCPlayer::SendEncryptionRequest()
     MCPP_PROFILE_SCOPE()
 
     SEncryptionRequest request;
-    std::string publicKey = IGlobalEnvironment::Get()->GetNetwork()->GetServerKeyPair()->GetAsnDerKey();
+    std::string publicKey = IGlobalEnvironment::Get()->GetNetwork().lock()->GetServerKeyPair()->GetAsnDerKey();
 
     request.m_publicKeyLength = static_cast<uint32_t>(publicKey.size());
     request.m_publicKey = std::move(publicKey);

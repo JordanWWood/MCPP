@@ -29,3 +29,5 @@ Makefile
 bin-int/
 
 premake5
+
+*.toml

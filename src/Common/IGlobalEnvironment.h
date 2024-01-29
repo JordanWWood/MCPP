@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "IConfiguration.h"
 #include "ICurlProcessor.h"
 #include "INetwork.h"
 
@@ -9,8 +10,9 @@ struct IGlobalEnvironment
     static IGlobalEnvironment* Get() { return m_sGlobalEnvironment; }
     
     // Systems
-    virtual INetwork* GetNetwork() const = 0;
-    virtual ICurlProcessor* GetCurl() const = 0;
+    virtual std::weak_ptr<INetwork> GetNetwork() const = 0;
+    virtual std::weak_ptr<ICurlProcessor> GetCurl() const = 0;
+    virtual std::weak_ptr<IConfiguration> GetConfiguration() const = 0;
 
     // Settings
     virtual bool IsOnline() const = 0;
