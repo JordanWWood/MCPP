@@ -6,6 +6,9 @@
 struct IPacketHandler;
 struct SPacketPayload;
 
+struct IConnection;
+using IConnectionPtr = std::shared_ptr<IConnection>;
+
 enum class EConnectionType
 {
     eCT_Client,
@@ -16,7 +19,7 @@ struct IConnection
 {
     virtual ~IConnection() = default;
     
-    virtual std::string GetRemoteAddress() const = 0;
+    virtual const std::string& GetRemoteAddress() const = 0;
     virtual EConnectionType GetConnectionType() const = 0;
     
     /////////////////////////////////////////////////////

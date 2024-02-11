@@ -21,6 +21,9 @@
 #define WOULD_BLOCK WSAEWOULDBLOCK
 #endif
 
+// Utils
+#define BIT(x) (1 << (x)) 
+
 /////////////////////////////////////////////////////////////////////
 // Endianness
 // This is a modified version of endianness.h from https://github.com/crashoz/uuid_v4

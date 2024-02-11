@@ -1,16 +1,15 @@
 ﻿#pragma once
 
-#include "ITCPServer.h"
-
 #include <functional>
+#include "IConnection.h"
 
+struct IRSAKeyPair;
 struct IPacketHandler;
 
 struct INetwork
 {
     virtual ~INetwork() = default;
-    
-    virtual ITCPServer* GetTCPServer() = 0;
+
     virtual void RegisterPacketHandler(std::weak_ptr<IPacketHandler> handlerWeakPtr) = 0;
 
     virtual void RegisterConnectionCallback(void* pCreator, std::function<void(const IConnectionPtr& pConnection)>&& functor) = 0;

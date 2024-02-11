@@ -7,46 +7,32 @@
 #include "spdlog/fmt/bin_to_hex.h"
 
 #include <vector>
-#include <openssl/err.h>
 
 #include "Packets/PacketReader.h"
 #include "Packets/PacketSizeCalc.h"
 
-#define DEFAULT_BUFLEN 512
-
-CClientConnection::~CClientConnection()
-{
-    if(m_clientSocket != INVALID_SOCKET)
-        CLOSE_SOCKET(m_clientSocket);
-}
-
 bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
 {
     MCPP_PROFILE_SCOPE()
-
-    char recvBuffer[DEFAULT_BUFLEN];
-    constexpr int recvBufferLength{ DEFAULT_BUFLEN };
-    memset(&recvBuffer, 0, recvBufferLength);
     
-    const int iResult = recv(m_clientSocket, recvBuffer, recvBufferLength, 0);
-    if (iResult > 0)
+    return m_socket.Recv([this, pHandler](char* bufferStart, uint32_t totalSize)
     {
         char* m_decryptedBuffer = nullptr;
         char* start;
         uint32_t totalOffset = 0;
         if (m_encryptionEnabled)
         {
-            m_decryptedBuffer = reinterpret_cast<char*>(m_secret->DecryptPacket(reinterpret_cast<unsigned char*>(recvBuffer), iResult));
+            m_decryptedBuffer = reinterpret_cast<char*>(m_secret->DecryptPacket(reinterpret_cast<unsigned char*>(bufferStart), totalSize));
             start = m_decryptedBuffer;
         }
         else
-            start = recvBuffer;
+            start = bufferStart;
 
         std::vector<SPacketPayload> payloads;
 
         // Keep processing packets until we've read the entire buffer
-        while (totalOffset < iResult) {
-            SPacketPayload payload = ReadUnencryptedPacket(start, iResult);
+        while (totalOffset < totalSize) {
+            SPacketPayload payload = ReadUnencryptedPacket(start, totalSize);
 
             if(!payload.m_payload)
                 break;
@@ -62,40 +48,14 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
             if (!result)
             {
                 MCLog::warn("Error processing packet. Disconnecting connection. PacketId[{}] Address[{}]", packetId, GetRemoteAddress().c_str());
-               
-                CLOSE_SOCKET(m_clientSocket);
-                m_socketState = ESocketState::eSS_CLOSED;
-                m_clientSocket = INVALID_SOCKET;
+
+                m_socket.Stop();
                 break;
             }
         }
         
         delete[] m_decryptedBuffer;
-        return true;
-    }
-
-    if (iResult == 0)
-    {
-        MCLog::debug("Client disconnected. Address[{}]", GetRemoteAddress());
-        CLOSE_SOCKET(m_clientSocket);
-        m_socketState = ESocketState::eSS_CLOSED;
-        return true;
-    }
-
-    const int error = GET_SOCKET_ERR();
-    if(error == WOULD_BLOCK)
-    {
-        // We're just waiting for something to receive. Break and we'll check if theres something next time
-        return true;
-    }
-
-    // If we make it here something went wrong
-    MCLog::error("Failed to receive packets from client. Error[{}] Address[{}]", error, GetRemoteAddress());
-    
-    CLOSE_SOCKET(m_clientSocket);
-    m_socketState = ESocketState::eSS_CLOSED;
-    
-    return false;
+    });
 }
 
 void CClientConnection::QueuePacket(SPacketPayload&& payload)
@@ -111,28 +71,22 @@ bool CClientConnection::SendQueuedPackets()
     SPacketPayload payload;
     while(m_queuedSends.try_dequeue(payload))
     {
-        int iResult;
+        bool success;
         if(!m_encryptionEnabled)
-            iResult = send(m_clientSocket, payload.m_payload, payload.m_size, 0);
+            success = m_socket.Send(payload.m_payload, payload.m_size);
         else
         {
             int cipherLength = 0;
             char* encryptedPacket = reinterpret_cast<char*>(m_secret->EncryptPacket(reinterpret_cast<unsigned char*>(payload.m_payload), payload.m_size, cipherLength));
-            iResult = send(m_clientSocket, encryptedPacket, cipherLength, 0);
+            success = m_socket.Send(encryptedPacket, cipherLength);
             delete[] encryptedPacket;
         }
-    
-        if (iResult == SOCKET_ERROR)
-        {
-            MCLog::error("Failed to send payload to client. Error[{}] Address[{}]", GET_SOCKET_ERR(), GetRemoteAddress());
 
-            m_socketState = ESocketState::eSS_CLOSED;
-            CLOSE_SOCKET(m_clientSocket);
+        if(!success)
             return false;
-        }
     }
     
-    return false;
+    return true;
 }
 
 SPacketPayload CClientConnection::ReadUnencryptedPacket(char* start, uint32_t maxSize)
@@ -156,7 +110,7 @@ SPacketPayload CClientConnection::ReadUnencryptedPacket(char* start, uint32_t ma
     payload.m_size = finalPayloadSize;
 
     if(finalPayloadSize > maxSize)
-        return SPacketPayload();
+        return {};
     
     payload.m_payload = new char[finalPayloadSize];
     memmove(payload.m_payload, start, finalPayloadSize);

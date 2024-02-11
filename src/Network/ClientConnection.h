@@ -1,31 +1,29 @@
 ﻿#pragma once
 
 #include "IConnection.h"
-#include "SocketUtils.h"
 #include "Encryption/SharedSecret.h"
 #include "PacketPayload.h"
 
 #include <concurrentqueue.h>
 
+#include "TCPSocket.h"
+
 
 class CClientConnection : public IConnection
 {
 public:
-    CClientConnection(uint64_t socket, std::string socketAddress)
-        : m_clientSocket(socket)
-        , m_socketAddress(std::move(socketAddress))
+    CClientConnection(CTCPSocket&& socket)
+        : m_socket(std::move(socket))
     {}
-
-    ~CClientConnection() override;
 
     /////////////////////////////////////////////////////////////////////
     // IConnection
-    virtual std::string GetRemoteAddress() const override { return m_socketAddress; }
+    virtual const std::string& GetRemoteAddress() const override { return m_socket.GetAddress(); }
     virtual EConnectionType GetConnectionType() const override { return m_type; }
     
     virtual bool RecvPackets(IPacketHandler* pHandler) final;
     virtual void QueuePacket(SPacketPayload&& payload) final;
-    virtual bool IsSocketClosed() const final { return m_socketState == ESocketState::eSS_CLOSED; }
+    virtual bool IsSocketClosed() const final { return m_socket.IsClosed(); }
     
     virtual void SetAESKey(std::string key) override { m_secret = std::make_unique<CSharedSecret>(std::move(key)); }
     virtual void EnableEncryption() override { m_encryptionEnabled = true; }
@@ -36,11 +34,7 @@ public:
     
 private:
     static SPacketPayload ReadUnencryptedPacket(char* start, uint32_t maxSize);
-
-    SOCKET m_clientSocket;
-
-    std::string m_socketAddress;
-    ESocketState m_socketState{ ESocketState::eSS_CONNECTED };
+    CTCPSocket m_socket;
 
     std::unique_ptr<CSharedSecret> m_secret;
     bool m_encryptionEnabled { false };

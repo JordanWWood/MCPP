@@ -17,8 +17,18 @@ static void NetworkThread(CNetwork* instance)
 }
 
 CNetwork::CNetwork(uint16_t hostPort)
-    : m_tcpServer(hostPort)
+    : m_listenSocket(eSF_Passive | eSF_Bind | eSF_Listen, "", hostPort)
 {
+#ifdef _WIN32
+    WSADATA wsaData;
+    int iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+    if(iResult != 0)
+    {
+        // TODO Logging
+        return;
+    }
+#endif
+
     m_networkThread = std::thread(NetworkThread, this);
 
     MCLog::info("Generating RSA key pair");
@@ -32,6 +42,10 @@ CNetwork::~CNetwork()
 
     // Wait for the network thread to exit
     m_networkThread.join();
+
+#ifdef _WIN32
+    WSACleanup();
+#endif
 }
 
 void CNetwork::RegisterPacketHandler(std::weak_ptr<IPacketHandler> handlerWeakPtr)
@@ -52,7 +66,7 @@ void CNetwork::UnregisterConnectionCallback(void* creator)
 
 std::string CNetwork::GenerateHexDigest(std::string publicKey, std::string sharedSecret)
 {
-    MCPP_PROFILE_SCOPE();
+    MCPP_PROFILE_SCOPE()
     
     SAuthHash hasher;
     hasher.Update(sharedSecret);
@@ -63,16 +77,16 @@ std::string CNetwork::GenerateHexDigest(std::string publicKey, std::string share
 
 void CNetwork::NetworkTick()
 {
-    m_shutdown = !m_tcpServer.Listen();
+    m_shutdown = !m_listenSocket.Start();
 
     auto nextFrame = std::chrono::high_resolution_clock::now() + TNetworkThreadFrame{1};
     while (!m_shutdown)
     {
         {
-            MCPP_PROFILE_NAMED_SCOPE("Network Update");
+            MCPP_PROFILE_NAMED_SCOPE("Network Update")
 
             // TODO we should reestablish the listen socket if it closes. For now the application just exits
-            if (m_tcpServer.IsSocketClosed())
+            if (m_listenSocket.IsClosed())
                 break;
 
             // Grab the network lock for any work here
@@ -80,7 +94,7 @@ void CNetwork::NetworkTick()
 
             // Network update
             // 1 Accept new connections
-            if (IConnectionPtr pConnection = m_tcpServer.AcceptConnection())
+            if (IConnectionPtr pConnection = m_listenSocket.Accept<CClientConnection>())
             {
                 for (auto& callback : m_connectionCallbacks)
                     callback.second(pConnection);
@@ -96,7 +110,7 @@ void CNetwork::NetworkTick()
                 if(!pHandler || pHandler->IsDead())
                 {
                     // TODO we need some better logging here. Like what we had when we were in CMCPlayer
-                    MCLog::debug("Disconnecting client");
+                    MCLog::info("Disconnecting client");
                     
                     // Handler has been deleted
                     it = m_packetHandlers.erase(it);
@@ -133,7 +147,7 @@ void CNetwork::NetworkTick()
         }
         
         {
-            MCPP_PROFILE_NAMED_SCOPE("Sleep");
+            MCPP_PROFILE_NAMED_SCOPE("Sleep")
             std::this_thread::sleep_until(nextFrame);
             nextFrame += TNetworkThreadFrame{1};
         }

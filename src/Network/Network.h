@@ -2,9 +2,11 @@
 
 #include <map>
 
+#include "IConfiguration.h"
+#include "IGlobalEnvironment.h"
 #include "INetwork.h"
 #include "IPacketHandler.h"
-#include "TCPServer.h"
+#include "TCPSocket.h"
 
 class CNetwork final : public INetwork
 {
@@ -14,8 +16,6 @@ public:
 
     /////////////////////////////////////////////////////////////////////
     // INetwork
-    ITCPServer* GetTCPServer() override { return &m_tcpServer; }
-    
     void RegisterPacketHandler(std::weak_ptr<IPacketHandler> handlerWeakPtr) override;
     void RegisterConnectionCallback(void* pCreator, std::function<void(const IConnectionPtr& pConnection)>&& functor) override;
     void UnregisterConnectionCallback(void* creator) override;
@@ -30,7 +30,7 @@ public:
     void NetworkTick();
 
 private:
-    CTCPServer m_tcpServer;
+    CTCPSocket m_listenSocket;
 
     std::vector<IConnectionPtr> m_activeConnections;
     std::vector<std::weak_ptr<IPacketHandler>> m_packetHandlers;
@@ -38,7 +38,7 @@ private:
     std::mutex m_networkLock;
     
     std::map<void*, std::function<void(IConnectionPtr pConnection)>> m_connectionCallbacks;
-    std::atomic_bool m_shutdown = false;
+    std::atomic_bool m_shutdown{ false };
 
     std::shared_ptr<IRSAKeyPair> m_pKeyPair;
 };
