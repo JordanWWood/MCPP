@@ -56,14 +56,14 @@ bool CTCPSocket::Start()
     u_long iMode = 1;
     if(ioctlsocket(m_socket, FIONBIO, &iMode) != 0)
 #else
-    int flags = fcntl(m_listenSocket, F_GETFL, 0);
+    int flags = fcntl(m_socket, F_GETFL, 0);
     if (flags == -1)
     {
         MCLog::error("Failed to get flags for socket with error code {}", GET_SOCKET_ERR());
         return false;
     }
     flags = (flags | O_NONBLOCK);
-    if(fcntl(m_listenSocket, F_SETFL, flags) != 0)
+    if(fcntl(m_socket, F_SETFL, flags) != 0)
 #endif
     {
         MCLog::error("Failed to change socket {}:{} mode to non-blocking with error code {}", m_address, m_port, GET_SOCKET_ERR());
