@@ -6,7 +6,8 @@
 #include "IGlobalEnvironment.h"
 #include "INetwork.h"
 #include "IPacketHandler.h"
-#include "TCPSocket.h"
+
+class CTCPSocket;
 
 class CNetwork final : public INetwork
 {
@@ -30,7 +31,7 @@ public:
     void NetworkTick();
 
 private:
-    CTCPSocket m_listenSocket;
+    std::unique_ptr<CTCPSocket> m_listenSocket;
 
     std::vector<IConnectionPtr> m_activeConnections;
     std::vector<std::weak_ptr<IPacketHandler>> m_packetHandlers;

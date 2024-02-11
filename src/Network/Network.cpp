@@ -5,6 +5,7 @@
 #include "IConnection.h"
 #include "Encryption/AuthHash.h"
 #include "Encryption/RSAKeyPair.h"
+#include "TCPSocket.h"
 
 #define NETWORK_THREAD_UPDATE_RATE 120
 using TNetworkThreadFrame = std::chrono::duration<int64_t, std::ratio<1, NETWORK_THREAD_UPDATE_RATE>>;
@@ -17,7 +18,7 @@ static void NetworkThread(CNetwork* instance)
 }
 
 CNetwork::CNetwork(uint16_t hostPort)
-    : m_listenSocket(eSF_Passive | eSF_Bind | eSF_Listen, "", hostPort)
+    : m_listenSocket(std::make_unique<CTCPSocket>(eSF_Passive | eSF_Bind | eSF_Listen, "", hostPort))
 {
 #ifdef _WIN32
     WSADATA wsaData;
@@ -77,7 +78,7 @@ std::string CNetwork::GenerateHexDigest(std::string publicKey, std::string share
 
 void CNetwork::NetworkTick()
 {
-    m_shutdown = !m_listenSocket.Start();
+    m_shutdown = !m_listenSocket->Start();
 
     auto nextFrame = std::chrono::high_resolution_clock::now() + TNetworkThreadFrame{1};
     while (!m_shutdown)
@@ -86,7 +87,7 @@ void CNetwork::NetworkTick()
             MCPP_PROFILE_NAMED_SCOPE("Network Update")
 
             // TODO we should reestablish the listen socket if it closes. For now the application just exits
-            if (m_listenSocket.IsClosed())
+            if (m_listenSocket->IsClosed())
                 break;
 
             // Grab the network lock for any work here
@@ -94,7 +95,7 @@ void CNetwork::NetworkTick()
 
             // Network update
             // 1 Accept new connections
-            if (IConnectionPtr pConnection = m_listenSocket.Accept<CClientConnection>())
+            if (IConnectionPtr pConnection = m_listenSocket->Accept<CClientConnection>())
             {
                 for (auto& callback : m_connectionCallbacks)
                     callback.second(pConnection);

@@ -133,6 +133,8 @@ bool CTCPSocket::Send(char* data, const uint32_t size)
         Stop();
         return false;
     }
+
+    return true;
 }
 
 bool CTCPSocket::Recv(TOnPacket&& packetCallback)
