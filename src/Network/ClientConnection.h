@@ -18,15 +18,15 @@ public:
 
     /////////////////////////////////////////////////////////////////////
     // IConnection
-    virtual const std::string& GetRemoteAddress() const override { return m_socket.GetAddress(); }
-    virtual EConnectionType GetConnectionType() const override { return m_type; }
+    const std::string& GetRemoteAddress() const override { return m_socket.GetAddress(); }
+    EConnectionType GetConnectionType() const override { return m_type; }
     
-    virtual bool RecvPackets(IPacketHandler* pHandler) final;
-    virtual void QueuePacket(SPacketPayload&& payload) final;
-    virtual bool IsSocketClosed() const final { return m_socket.IsClosed(); }
+    bool RecvPackets(IPacketHandler* pHandler) final;
+    void QueuePacket(SPacketPayload&& payload) final;
+    bool IsSocketClosed() const final { return m_socket.IsClosed(); }
     
-    virtual void SetAESKey(std::string key) override { m_secret = std::make_unique<CSharedSecret>(std::move(key)); }
-    virtual void EnableEncryption() override { m_encryptionEnabled = true; }
+    void SetAESKey(std::string key) override { m_secret = std::make_unique<CSharedSecret>(std::move(key)); }
+    void EnableEncryption() override { m_encryptionEnabled = true; }
     // ~IConnection
     /////////////////////////////////////////////////////////////////////
 

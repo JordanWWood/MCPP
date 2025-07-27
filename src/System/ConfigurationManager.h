@@ -1,6 +1,14 @@
 ﻿#pragma once
 #include "IConfiguration.h"
 
+#include <typeinfo>
+
+struct ConfigElement {
+    std::string m_name;
+
+    void* m_value;
+};
+
 class CConfigurationManager : public IConfiguration
 {
 public:
@@ -20,9 +28,11 @@ private:
     bool LoadConfigOrGenerateDefault();
     bool LoadConfig();
 
-    bool m_isOnline;
-    uint16_t m_hostPort;
     std::vector<SServer> m_servers;
 
+    std::unordered_map<std::string, ConfigElement> m_configValues;
+
+    bool m_isOnline{ true };
+    uint16_t m_hostPort{ 0 };
     std::string m_configPath;
 };

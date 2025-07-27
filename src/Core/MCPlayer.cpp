@@ -19,7 +19,7 @@
 #include "Packets/Login/LoginSuccess.h"
 
 // TODO do something better than this
-#define PROTOCOL_VERSION 765
+#define PROTOCOL_VERSION 772
 
 void CMCPlayer::NetworkTick()
 {
@@ -233,8 +233,8 @@ bool CMCPlayer::HandleStatus(SPacketPayload&& payload)
         response.m_body = {
             {
                 "version", {
-                    {"name", "1.20.4"},
-                    {"protocol", 765}
+                    {"name", "1.21.8"},
+                    {"protocol", PROTOCOL_VERSION}
                 }
             },
             {
