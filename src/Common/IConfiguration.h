@@ -5,6 +5,7 @@
 
 #include <map>
 #include <typeindex>
+#include <mutex>
 
 // Config groups represent a group of configurable variables that are used by a given area of code.
 // For example the following usage
@@ -25,13 +26,20 @@
 
 #define CONFIG_GROUP_BEGIN(structName, configNamespace, group)                                  \
     namespace config { namespace configNamespace { struct group {}; } }                         \
-    struct structName : public IConfigGroup {                                                   \
+    class structName : public IConfigGroup {                                                    \
+    public:                                                                                     \
         structName()                                                                            \
             : IConfigGroup(typeid(config::configNamespace::group), #configNamespace, #group)    \
         {}
 
 #define CONFIG_GROUP_MEMBER(type, variable, defaultValue)           \
+    private:                                                        \
     SConfigValue<type> variable { #variable, defaultValue, *this }; \
+    public:                                                         \
+    type Get##variable() const {                                    \
+        std::lock_guard<std::mutex> lock(m_mutex);                  \                                                            \
+        return variable.m_value;                                    \
+    }                                                               \
 
 #define CONFIG_GTROUP_END() \
     };
@@ -60,6 +68,7 @@ class IConfigGroup
 
     std::type_index m_typeIndex;
     std::vector<IConfigValue*> m_typeMapping;
+    std::mutex m_mutex;
 };
 
 struct IConfigValue {
@@ -94,4 +103,6 @@ struct SConfigValue : public IConfigValue
 struct IConfigurationManager
 {
     virtual ~IConfigurationManager() = default;
+
+    virtual void RegisterConfigGroup(IConfigGroup* group) = 0;
 };
