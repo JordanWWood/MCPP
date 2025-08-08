@@ -28,10 +28,128 @@ void CConfigurationManager::RegisterConfigGroup(IConfigGroup* group)
         return;
     }
 
-    // TODO: We should populate the config group with the values from the config file if they exist there
-    //       else we should use the default values defined in the config group
-    MCLog::info("Registered config group {} in namespace {}", group->m_groupName, group->m_namespaceName);
+    auto getOrCreateTable = [](toml::table& parent, const std::string& key) -> toml::table&
+        {
+            if (toml::node* node = parent.get(key); node && node->is_table())
+                return *node->as_table();
+            return *parent.insert_or_assign(key, toml::table{}).first->second.as_table();
+        };
 
+    toml::table& groupTable = group->m_namespaceName.empty()
+        ? getOrCreateTable(m_configTable, group->m_groupName)
+        : getOrCreateTable(getOrCreateTable(m_configTable, group->m_namespaceName), group->m_groupName);
+
+    auto insertDefault = [&groupTable](IConfigValue* mapping) {
+        if (mapping->GetType() == typeid(int))
+            groupTable.insert_or_assign(mapping->GetName(), static_cast<SConfigValue<int>*>(mapping)->m_value);
+        else if (mapping->GetType() == typeid(std::string))
+            groupTable.insert_or_assign(mapping->GetName(), static_cast<SConfigValue<std::string>*>(mapping)->m_value);
+        else if (mapping->GetType() == typeid(bool))
+            groupTable.insert_or_assign(mapping->GetName(), static_cast<SConfigValue<bool>*>(mapping)->m_value);
+        else if (mapping->GetType() == typeid(float))
+            groupTable.insert_or_assign(mapping->GetName(), static_cast<SConfigValue<float>*>(mapping)->m_value);
+        else if (mapping->GetType() == typeid(double))
+            groupTable.insert_or_assign(mapping->GetName(), static_cast<SConfigValue<double>*>(mapping)->m_value);
+        else
+            MCLog::warn("Unsupported config value type for {}", mapping->GetName());
+    };
+
+    auto assignFromNode = [group](IConfigValue* mapping, toml::node& node) {
+        if (mapping->GetType() == typeid(int))
+        {
+            if (auto intValue = node.as_integer())
+            {
+                std::lock_guard<std::mutex> lock(group->m_mutex);
+                static_cast<SConfigValue<int>*>(mapping)->m_value = intValue->get();
+            }
+            else
+            {
+                MCLog::error("Config value {} in group {} in namespace {} is not an integer", mapping->GetName(), group->m_groupName, group->m_namespaceName);
+            }
+        }
+        else if (mapping->GetType() == typeid(std::string))
+        {
+            if (auto strValue = node.as_string())
+            {
+                std::lock_guard<std::mutex> lock(group->m_mutex);
+                static_cast<SConfigValue<std::string>*>(mapping)->m_value = strValue->get();
+            }
+            else
+            {
+                MCLog::error("Config value {} in group {} in namespace {} is not a string", mapping->GetName(), group->m_groupName, group->m_namespaceName);
+            }
+        }
+        else if (mapping->GetType() == typeid(bool))
+        {
+            if (auto boolValue = node.as_boolean())
+            {
+                std::lock_guard<std::mutex> lock(group->m_mutex);
+                static_cast<SConfigValue<bool>*>(mapping)->m_value = boolValue->get();
+            }
+            else
+            {
+                MCLog::error("Config value {} in group {} in namespace {} is not a boolean", mapping->GetName(), group->m_groupName, group->m_namespaceName);
+            }
+        }
+        else if (mapping->GetType() == typeid(float))
+        {
+            if (auto floatValue = node.as_floating_point())
+            {
+                std::lock_guard<std::mutex> lock(group->m_mutex);
+                static_cast<SConfigValue<float>*>(mapping)->m_value = static_cast<float>(floatValue->get());
+            }
+            else
+            {
+                MCLog::error("Config value {} in group {} in namespace {} is not a float", mapping->GetName(), group->m_groupName, group->m_namespaceName);
+            }
+        }
+        else if (mapping->GetType() == typeid(double))
+        {
+            if (auto doubleValue = node.as_floating_point())
+            {
+                std::lock_guard<std::mutex> lock(group->m_mutex);
+                static_cast<SConfigValue<double>*>(mapping)->m_value = doubleValue->get();
+            }
+            else
+            {
+                MCLog::error("Config value {} in group {} in namespace {} is not a double", mapping->GetName(), group->m_groupName, group->m_namespaceName);
+            }
+        }
+        else
+        {
+            MCLog::warn("Unsupported config value type for {}", mapping->GetName());
+        }
+    };
+
+    bool configChanged = false;
+    for (IConfigValue* mapping : group->m_typeMapping)
+    {
+        if (!mapping)
+        {
+            MCLog::error("Config value mapping is null for group {} in namespace {}", group->m_groupName, group->m_namespaceName);
+            continue;
+        }
+
+        toml::node* valueNode = groupTable.get(mapping->GetName());
+        if (!valueNode)
+        {
+            insertDefault(mapping);
+            configChanged = true;
+            continue;
+        }
+
+        assignFromNode(mapping, *valueNode);
+    }
+
+    if (configChanged)
+    {
+        MCLog::info("Wrote new defaults to the config file");
+
+        std::ofstream out(m_configPath);
+        out << m_configTable;
+    }
+
+    MCLog::info("Registered config group {} in namespace {}", group->m_groupName, group->m_namespaceName);
 }
 
 IConfigGroup* CConfigurationManager::GetConfigGroup(const std::type_index& typeIndex)
