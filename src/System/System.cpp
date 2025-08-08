@@ -10,19 +10,19 @@
 #define MAIN_THREAD_UPDATE_RATE 20
 using TMainThreadFrame = std::chrono::duration<int64_t, std::ratio<1, MAIN_THREAD_UPDATE_RATE>>;
 
-// TODO allow this to be passed by commandline
+// TODO allow this to be passed by command line
 #define CONFIG_FILE "config.toml"
 
 bool CSystem::Init()
 {
-    // Load the config before we initialise any other systems
+    // Load the config before we initialize any other systems
     std::shared_ptr<CConfigurationManager> configManager = std::make_shared<CConfigurationManager>(CONFIG_FILE);
     if(!configManager->Init())
         return false;
-    m_pConfiguration = configManager;
-    m_globalEnvironment.SetConfiguration(configManager);
+    m_pConfigurationManager = configManager;
+    m_globalEnvironment.SetConfigManager(configManager);
     
-    m_pNetwork = std::make_shared<CNetwork>(m_pConfiguration->GetHostPort());
+    m_pNetwork = std::make_shared<CNetwork>(25565); // TODO bring back config
     m_globalEnvironment.SetNetwork(m_pNetwork);
 
     m_pCurlProcessor = std::make_shared<CCurlProcessor>();
@@ -49,7 +49,7 @@ bool CSystem::Run()
         
         // TODO Network Main Thread End
 
-        // Frame synchronisation
+        // Frame synchronization
         MCPP_PROFILE_NAMED_SCOPE("Sync Frame");
         OPTICK_TAG("FPS", MAIN_THREAD_UPDATE_RATE);
         std::this_thread::sleep_until(nextFrame);

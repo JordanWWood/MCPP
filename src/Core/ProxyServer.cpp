@@ -9,10 +9,10 @@ bool CProxyServer::Init()
 {
     MCPP_PROFILE_SCOPE()
 
-    IGlobalEnvironment::Get()->GetNetwork().lock()->RegisterConnectionCallback(this, [this](const IConnectionPtr& pConnection) {
+    IGlobalEnvironment::Get().GetNetwork().lock()->RegisterConnectionCallback(this, [this](const IConnectionPtr& pConnection) {
         std::lock_guard lock(m_playerLock);
         const std::shared_ptr<CMCPlayer> pPlayer = m_players.emplace_back(std::make_shared<CMCPlayer>(pConnection));
-        IGlobalEnvironment::Get()->GetNetwork().lock()->RegisterPacketHandler(pPlayer);
+        IGlobalEnvironment::Get().GetNetwork().lock()->RegisterPacketHandler(pPlayer);
     });
     
     return true;

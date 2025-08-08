@@ -24,12 +24,12 @@
 // the originally provided type
 // SSocketConfig config = CConfigManager::Get().GetConfig<config::network::socket>();
 
-#define CONFIG_GROUP_BEGIN(structName, configNamespace, group)                                  \
-    namespace config { namespace configNamespace { struct group {}; } }                         \
-    class structName : public IConfigGroup {                                                    \
-    public:                                                                                     \
-        structName()                                                                            \
-            : IConfigGroup(typeid(config::configNamespace::group), #configNamespace, #group)    \
+#define CONFIG_GROUP_BEGIN(structName, configNamespace, group)                               \
+    namespace config { namespace configNamespace { struct group {}; } }                      \
+    class structName : public IConfigGroup {                                                 \
+    public:                                                                                  \
+        structName()                                                                         \
+            : IConfigGroup(typeid(config::configNamespace::group), #configNamespace, #group) \
         {}
 
 #define CONFIG_GROUP_MEMBER(type, variable, defaultValue)           \
@@ -37,7 +37,7 @@
     SConfigValue<type> variable { #variable, defaultValue, *this }; \
     public:                                                         \
     type Get##variable() const {                                    \
-        std::lock_guard<std::mutex> lock(m_mutex);                  \                                                            \
+        std::lock_guard<std::mutex> lock(m_mutex);                  \
         return variable.m_value;                                    \
     }                                                               \
 
@@ -45,16 +45,24 @@
     };
 
 // This macro is used to register the config group with the global environment.
-#define REGISTER_CONFIG_GROUP(structName) \
-    /* We can use a struct with a constructor to run some code for us in the context the macro is used */   \
-    struct Register##structName {                                                                           \
-        Register##structName() {                                                                            \
-            IGlobalEnvironment::Get()->GetConfigManager()->RegisterConfigGroup(new structName());)          \
-        }                                                                                                   \
-    };                                                                                                      \
-    Register##structName structName##Reg();
+#define REGISTER_CONFIG_GROUP(structName)                                                                 \
+    /* We can use a struct with a constructor to run some code for us in the context the macro is used */ \
+    struct Register##structName {                                                                         \
+        Register##structName() {                                                                          \
+            IGlobalEnvironment::Get().GetConfigManager().lock()->RegisterConfigGroup(new structName());   \
+        }                                                                                                 \
+    };                                                                                                    \
+    volatile Register##structName structName##Reg;
 
-class IConfigGroup
+struct IConfigValue {
+    virtual ~IConfigValue() = default;
+
+    virtual std::string GetName() const = 0;
+    virtual const std::type_info& GetType() const = 0;
+    virtual void* GetValue() = 0;
+};
+
+struct IConfigGroup
 {
     IConfigGroup(std::type_index typeIndex, std::string namespaceName, std::string groupName)
         : m_namespaceName(std::move(namespaceName))
@@ -63,20 +71,14 @@ class IConfigGroup
     {
     }
 
+    virtual ~IConfigGroup() = default;
+
     std::string m_namespaceName;
     std::string m_groupName;
 
     std::type_index m_typeIndex;
-    std::vector<IConfigValue*> m_typeMapping;
-    std::mutex m_mutex;
-};
-
-struct IConfigValue {
-    virtual ~IConfigValue() = default;
-
-    virtual std::string GetName() const = 0;
-    virtual const std::type_info& GetType() const = 0;
-    virtual void* GetValue() = 0;
+    std::vector<IConfigValue*> m_typeMapping{ };
+    mutable std::mutex m_mutex;
 };
 
 template<typename T>
@@ -105,4 +107,12 @@ struct IConfigurationManager
     virtual ~IConfigurationManager() = default;
 
     virtual void RegisterConfigGroup(IConfigGroup* group) = 0;
+
+    template<typename T>
+    IConfigGroup* GetConfigGroup() {
+        return GetConfigGroup(typeid(T));
+    }
+
+protected:
+    virtual IConfigGroup* GetConfigGroup(const std::type_index& typeIndex) = 0;
 };

@@ -1,38 +1,34 @@
 ﻿#pragma once
-#include "IConfiguration.h"
+#include "IConfigurationManager.h"
 
 #include <typeinfo>
 
-struct ConfigElement {
-    std::string m_name;
+#define TOML_IMPLEMENTATION
+#include <toml++/toml.hpp>
 
-    void* m_value;
-};
 
-class CConfigurationManager : public IConfiguration
+class CConfigurationManager : public IConfigurationManager
 {
 public:
     CConfigurationManager(std::string&& configPath);
+    ~CConfigurationManager();
 
     bool Init();
     
     /////////////////////////////////////////////////////////////////////
     // IConfiguration
-    bool IsOnline() const override { return m_isOnline; };
-    const std::vector<SServer>& GetPredefinedServers() const override { return m_servers; }
-    uint16_t GetHostPort() const override { return m_hostPort; }
+    virtual void RegisterConfigGroup(IConfigGroup* group) override;
+    virtual IConfigGroup* GetConfigGroup(const std::type_index& typeIndex) override;
     // ~IConfiguration
     /////////////////////////////////////////////////////////////////////
-    
+
 private:
     bool LoadConfigOrGenerateDefault();
     bool LoadConfig();
 
-    std::vector<SServer> m_servers;
+    using TConfigMap = std::unordered_map<std::type_index, IConfigGroup*>;
+    TConfigMap m_registeredConfigs;
 
-    std::unordered_map<std::string, ConfigElement> m_configValues;
-
-    bool m_isOnline{ true };
-    uint16_t m_hostPort{ 0 };
+    toml::table m_configTable;
     std::string m_configPath;
 };
