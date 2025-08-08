@@ -19,7 +19,7 @@
 #include "Packets/Login/LoginSuccess.h"
 
 // TODO do something better than this
-#define PROTOCOL_VERSION 765
+#define PROTOCOL_VERSION 772
 
 void CMCPlayer::NetworkTick()
 {
@@ -111,7 +111,7 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
         MCLog::debug("User from {} is {}", m_pConnection->GetRemoteAddress(), GetUsername());
 
         // If we're online we want to encrypt the connection
-        if (IGlobalEnvironment::Get()->IsOnline())
+        if (IGlobalEnvironment::Get().IsOnline())
         {
             SendEncryptionRequest();
             MCLog::debug("Sent encryption request. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(),
@@ -132,7 +132,7 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
         MCLog::debug("Received encryption response. Address[{}] Username[{}]", m_pConnection->GetRemoteAddress(),
                      GetUsername());
 
-        const std::shared_ptr<IRSAKeyPair> pKey = IGlobalEnvironment::Get()->GetNetwork().lock()->GetServerKeyPair();
+        const std::shared_ptr<IRSAKeyPair> pKey = IGlobalEnvironment::Get().GetNetwork().lock()->GetServerKeyPair();
 
         SEncryptionResponse response;
         response.m_pServerKey = pKey;
@@ -153,7 +153,7 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
         MCLog::debug("Beginning authentication with mojang. Address[{}] Username[{}]",
                      m_pConnection->GetRemoteAddress(), GetUsername());
 
-        std::string digest = IGlobalEnvironment::Get()->GetNetwork().lock()->GenerateHexDigest(
+        std::string digest = IGlobalEnvironment::Get().GetNetwork().lock()->GenerateHexDigest(
             pKey->GetAsnDerKey(), response.m_sharedSecret);
         MCLog::debug("Generated digest. Digest[{}] Address[{}] Username[{}]", digest, m_pConnection->GetRemoteAddress(),
                      GetUsername());
@@ -165,7 +165,7 @@ bool CMCPlayer::HandleLogin(SPacketPayload&& payload)
 
         // TODO send over the ip if we want to prevent proxy connections
 
-        IGlobalEnvironment::Get()->GetCurl().lock()->QueueHttpGet(
+        IGlobalEnvironment::Get().GetCurl().lock()->QueueHttpGet(
             url, [this, username = GetUsername()](bool success, std::string body)
             {
                 MCPP_PROFILE_SCOPE()
@@ -233,8 +233,8 @@ bool CMCPlayer::HandleStatus(SPacketPayload&& payload)
         response.m_body = {
             {
                 "version", {
-                    {"name", "1.20.4"},
-                    {"protocol", 765}
+                    {"name", "1.21.8"},
+                    {"protocol", PROTOCOL_VERSION}
                 }
             },
             {
@@ -268,7 +268,7 @@ bool CMCPlayer::SendEncryptionRequest()
     MCPP_PROFILE_SCOPE()
 
     SEncryptionRequest request;
-    std::string publicKey = IGlobalEnvironment::Get()->GetNetwork().lock()->GetServerKeyPair()->GetAsnDerKey();
+    std::string publicKey = IGlobalEnvironment::Get().GetNetwork().lock()->GetServerKeyPair()->GetAsnDerKey();
 
     request.m_publicKeyLength = static_cast<uint32_t>(publicKey.size());
     request.m_publicKey = std::move(publicKey);

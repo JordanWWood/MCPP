@@ -2,12 +2,13 @@
 
 #include <map>
 
-#include "IConfiguration.h"
+#include "IConfigurationManager.h"
 #include "IGlobalEnvironment.h"
 #include "INetwork.h"
 #include "IPacketHandler.h"
 
 class CTCPSocket;
+class CNetworkConfig;
 
 class CNetwork final : public INetwork
 {
@@ -42,4 +43,5 @@ private:
     std::atomic_bool m_shutdown{ false };
 
     std::shared_ptr<IRSAKeyPair> m_pKeyPair;
+    CNetworkConfig* m_config;
 };

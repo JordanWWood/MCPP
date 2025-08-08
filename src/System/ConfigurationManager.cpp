@@ -1,34 +1,47 @@
 ﻿#include "pch.h"
 #include "ConfigurationManager.h"
 
-#define TOML_IMPLEMENTATION
-#include <toml++/toml.hpp>
-
-using namespace std::string_view_literals;
-static constexpr auto g_defaultConfig = R"([general]
-# Disabling this will allow non genuine clients to connect to the proxy
-online_mode = true
-# The port MCPP will run on by default
-host_port = 25565
-
-[[servers]]
-name = "Default"
-address = "127.0.0.1"
-port = 25566
-
-# Clients will connect to this server by default. 
-# If no default is defined a server will be selected round robin
-default = true
-)"sv;
-
 CConfigurationManager::CConfigurationManager(std::string&& configPath)
     : m_configPath(std::move(configPath))
 {
 }
 
+CConfigurationManager::~CConfigurationManager()
+{
+    for (auto& kv : m_registeredConfigs) {
+        delete kv.second;
+        m_registeredConfigs.erase(kv.first);
+    }
+}
+
 bool CConfigurationManager::Init()
 {
     return LoadConfigOrGenerateDefault();
+}
+
+void CConfigurationManager::RegisterConfigGroup(IConfigGroup* group)
+{
+    const auto& pair = m_registeredConfigs.try_emplace(group->m_typeIndex, group);
+    if(!pair.second)
+    {
+        MCLog::error("Config group with type index {} already registered", group->m_typeIndex.name());
+        return;
+    }
+
+    // TODO: We should populate the config group with the values from the config file if they exist there
+    //       else we should use the default values defined in the config group
+    MCLog::info("Registered config group {} in namespace {}", group->m_groupName, group->m_namespaceName);
+
+}
+
+IConfigGroup* CConfigurationManager::GetConfigGroup(const std::type_index& typeIndex)
+{
+    auto it = m_registeredConfigs.find(typeIndex);
+    if(it != m_registeredConfigs.end())
+        return it->second;
+
+    MCLog::error("Config group with type index {} not found", typeIndex.name());
+    return nullptr;
 }
 
 bool CConfigurationManager::LoadConfigOrGenerateDefault()
@@ -40,7 +53,7 @@ bool CConfigurationManager::LoadConfigOrGenerateDefault()
     MCLog::info("Could not find config. Generating default config {}", m_configPath);
     
     std::ofstream out(m_configPath);
-    out << g_defaultConfig;
+    out << "";
     out.close();
     
     return LoadConfig();
@@ -55,71 +68,97 @@ bool CConfigurationManager::LoadConfig()
         return false;
     }
 
-    toml::table tbl = result.table();
-    toml::node_view serversView = tbl["servers"];
-    toml::array* arr = tbl["servers"].as_array();
-    if(!arr)
-    {
-        MCLog::error(
-            "No servers defined in config {}. MCPP needs at least one registered server to operate correctly. "
-            "Functionality to allow no servers to be defined at startup is coming soon...", m_configPath);
+    m_configTable = result.table();
 
-        return false;
+    for (auto [_, v] : m_registeredConfigs)
+    {
+        bool hasNamespace = !v->m_namespaceName.empty();
+        toml::node_view startingView = m_configTable[hasNamespace ? v->m_namespaceName : v->m_groupName];
+        if (hasNamespace)
+            startingView = startingView[v->m_groupName];
+
+        for (IConfigValue* mapping : v->m_typeMapping)
+        {
+            if (!mapping)
+            {
+                MCLog::error("Config value mapping is null for group {} in namespace {}", v->m_groupName, v->m_namespaceName);
+                continue;
+            }
+            toml::node_view valueView = startingView[mapping->GetName()];
+            if (!valueView)
+            {
+                // Its totally fine if a config value is not present in the config file.
+                // We'll just use the default value defined in the config group
+                MCLog::debug("Config value {} not found in config for group {} in namespace {}", mapping->GetName(), v->m_groupName, v->m_namespaceName);
+                continue;
+            }
+
+            if (mapping->GetType() == typeid(int)) {
+                if (auto intValue = valueView.as_integer())
+                {
+                    std::lock_guard<std::mutex> lock(v->m_mutex);
+                    static_cast<SConfigValue<int>*>(mapping)->m_value = intValue->get();
+                }
+                else
+                {
+                    MCLog::error("Config value {} in group {} in namespace {} is not an integer", mapping->GetName(), v->m_groupName, v->m_namespaceName);
+                    return false;
+                }
+            }
+            else if (mapping->GetType() == typeid(std::string)) {
+                if (auto strValue = valueView.as_string())
+                {
+                    std::lock_guard<std::mutex> lock(v->m_mutex);
+                    static_cast<SConfigValue<std::string>*>(mapping)->m_value = strValue->get();
+                }
+                else
+                {
+                    MCLog::error("Config value {} in group {} in namespace {} is not a string", mapping->GetName(), v->m_groupName, v->m_namespaceName);
+                    return false;
+                }
+            }
+            else if (mapping->GetType() == typeid(bool)) {
+                if (auto boolValue = valueView.as_boolean())
+                {
+                    std::lock_guard<std::mutex> lock(v->m_mutex);
+                    static_cast<SConfigValue<bool>*>(mapping)->m_value = boolValue->get();
+                }
+                else
+                {
+                    MCLog::error("Config value {} in group {} in namespace {} is not a boolean", mapping->GetName(), v->m_groupName, v->m_namespaceName);
+                    return false;
+                }
+            }
+            else if (mapping->GetType() == typeid(float)) {
+                if (auto floatValue = valueView.as_floating_point())
+                {
+                    std::lock_guard<std::mutex> lock(v->m_mutex);
+                    static_cast<SConfigValue<float>*>(mapping)->m_value = floatValue->get();
+                }
+                else
+                {
+                    MCLog::error("Config value {} in group {} in namespace {} is not a float", mapping->GetName(), v->m_groupName, v->m_namespaceName);
+                    return false;
+                }
+            }
+            else if (mapping->GetType() == typeid(double)) {
+                if (auto doubleValue = valueView.as_floating_point())
+                {
+                    std::lock_guard<std::mutex> lock(v->m_mutex);
+                    static_cast<SConfigValue<double>*>(mapping)->m_value = doubleValue->get();
+                }
+                else
+                {
+                    MCLog::error("Config value {} in group {} in namespace {} is not a double", mapping->GetName(), v->m_groupName, v->m_namespaceName);
+                    return false;
+                }
+            }
+            else { 
+                MCLog::warn("Unsupported config value type for {}", mapping->GetName());
+            }
+
+        }
     }
     
-    int size = arr->size();
-    bool successfulParse{ true };
-    for(int i = 0; i < size; ++i)
-    {
-        toml::node_view serverTable = serversView[i];
-        if(!serverTable.is_table())
-        {
-            MCLog::warn("Unknown element in Servers. Element will be ignored");
-            continue;
-        }
-        
-        SServer newServer;
-
-        std::string& serverName = newServer.m_name;
-        if(toml::value<std::string>* name = serverTable["name"].as_string())
-            serverName = name->get();
-                
-        if(toml::value<std::string>* address = serverTable["address"].as_string())
-            newServer.m_address = address->get();
-        else
-        {
-            MCLog::error("Server {} cannot parse address", serverName);
-            successfulParse = false;
-            break;
-        }
-
-        if(toml::value<int64_t>* port = serverTable["port"].as_integer())
-            newServer.m_port = port->get();
-        else
-            MCLog::warn("Server {} cannot parse port. Port will default to 25565", serverName);
-
-        if(toml::value<bool>* isDefault = serverTable["default"].as_boolean())
-            newServer.isDefault = isDefault->get();
-            
-        m_servers.emplace_back(std::move(newServer));
-    }
-
-    const toml::node_view general = tbl["general"];
-    if(!general)
-    {
-        MCLog::warn("\"general\" is not defined in {}. Will fall back on defaults", m_configPath);
-        return true;
-    }
-
-    if(toml::value<bool>* onlineMode = general["online_mode"].as_boolean())
-        m_isOnline = onlineMode->get();
-    else
-        MCLog::warn("\"general:online_mode\" is not defined. Defaulting to {}", m_isOnline);
-
-    if(toml::value<int64_t>* hostPort = general["host_port"].as_integer())
-        m_hostPort = hostPort->get();
-    else
-        MCLog::warn("\"general:host_port\" is not defined. Defaulting to {}", m_hostPort);
-    
-    return successfulParse;
+    return true;
 }

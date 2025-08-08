@@ -15,8 +15,7 @@ bool CClientConnection::RecvPackets(IPacketHandler* pHandler)
 {
     MCPP_PROFILE_SCOPE()
     
-    return m_socket.Recv([this, pHandler](char* bufferStart, uint32_t totalSize)
-    {
+    return m_socket.Recv([this, pHandler](char* bufferStart, uint32_t totalSize) {
         char* m_decryptedBuffer = nullptr;
         char* start;
         uint32_t totalOffset = 0;
