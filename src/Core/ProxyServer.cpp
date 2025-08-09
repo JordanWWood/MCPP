@@ -8,7 +8,7 @@
 
 struct SServer {
     std::string address{ "127.0.0.1" };
-    std::uint16_t port{ 25565 };
+    int port{ 25565 };
 };
 CONFIG_STRUCT_BEGIN(SServer)
 CONFIG_STRUCT_MEMBER(address);
