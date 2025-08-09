@@ -13,7 +13,7 @@ using TNetworkThreadFrame = std::chrono::duration<int64_t, std::ratio<1, NETWORK
 CONFIG_GROUP_BEGIN(CNetworkConfig, network, base)
 CONFIG_GROUP_MEMBER(std::string, host, "locahost")
 CONFIG_GROUP_MEMBER(int, port, 25565)
-CONFIG_GTROUP_END()
+CONFIG_GROUP_END()
 
 static void NetworkThread(CNetwork* instance)
 {

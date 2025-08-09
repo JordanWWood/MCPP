@@ -1,11 +1,10 @@
 ﻿#pragma once
 #include "IConfigurationManager.h"
 
-#include <typeinfo>
-
-#define TOML_IMPLEMENTATION
-#include <toml++/toml.hpp>
-
+#include "../../vendor/tomlplusplus/include/toml++/toml.hpp"
+#include <unordered_map>
+#include <typeindex>
+#include <string>
 
 class CConfigurationManager : public IConfigurationManager
 {
@@ -14,11 +13,11 @@ public:
     ~CConfigurationManager();
 
     bool Init();
-    
+
     /////////////////////////////////////////////////////////////////////
     // IConfiguration
-    virtual void RegisterConfigGroup(IConfigGroup* group) override;
-    virtual IConfigGroup* GetConfigGroup(const std::type_index& typeIndex) override;
+    void RegisterConfigGroup(IConfigGroup* group) override;
+    IConfigGroup* GetConfigGroup(const std::type_index& typeIndex) override;
     // ~IConfiguration
     /////////////////////////////////////////////////////////////////////
 

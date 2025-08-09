@@ -14,6 +14,8 @@ struct ITCPServer;
 class CProxyServer : public IServer
 {
 public:
+    CProxyServer();
+
     /////////////////////////////////////////////////////////////////////
     // IServer
     virtual bool Init() override;

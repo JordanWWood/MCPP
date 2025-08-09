@@ -4,6 +4,32 @@
 #include "MCPlayer.h"
 
 #include "IGlobalEnvironment.h"
+#include "IConfigurationManager.h"
+
+struct SServer {
+    std::string address{ "127.0.0.1" };
+    std::uint16_t port{ 25565 };
+};
+CONFIG_STRUCT_BEGIN(SServer)
+CONFIG_STRUCT_MEMBER(address);
+CONFIG_STRUCT_MEMBER(port);
+CONFIG_STRUCT_END()
+
+CONFIG_GROUP_BEGIN_NO_NAMESPACE(CProxyServerConfig, proxy)
+CONFIG_GROUP_MEMBER(bool, IsOnline, true)
+CONFIG_GROUP_MEMBER(std::vector<SServer>, Servers, { CONCAT({}, {}, {}) })
+CONFIG_GROUP_END()
+
+CProxyServer::CProxyServer()
+    : m_quit(false)
+{
+    MCPP_PROFILE_SCOPE()
+    // Register the config group for the proxy server
+    IGlobalEnvironment::Get().GetConfigManager().lock()->RegisterConfigGroup(new CProxyServerConfig());
+    
+    // Initialize the player list
+    m_players.reserve(10); // Reserve space for 10 players initially
+}
 
 bool CProxyServer::Init()
 {
