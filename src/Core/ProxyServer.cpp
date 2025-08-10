@@ -17,7 +17,7 @@ CONFIG_STRUCT_END()
 
 CONFIG_GROUP_BEGIN_NO_NAMESPACE(CProxyServerConfig, proxy)
 CONFIG_GROUP_MEMBER(bool, IsOnline, true)
-CONFIG_GROUP_MEMBER(std::vector<SServer>, Servers, { CONCAT({}, {}, {}) })
+CONFIG_GROUP_MEMBER(std::vector<SServer>, Servers, { {} })
 CONFIG_GROUP_END()
 
 CProxyServer::CProxyServer()
