@@ -12,6 +12,17 @@
 
 // Forward declarations for ConfigStructTraits are provided later.
 
+struct IConfigGroup;
+
+template<typename T, typename Enable = void>
+struct ConfigGroupType;
+
+template<typename T>
+struct ConfigGroupType<T, std::enable_if_t<std::is_base_of_v<IConfigGroup, T>>>
+{
+    using type = T;
+};
+
 // Config groups represent a group of configurable variables that are used by a given area of code.
 // For example the following usage
 // CONFIG_GROUP_BEGIN(SSocketConfig, network, socket)
@@ -20,7 +31,6 @@
 // CONFIG_GROUP_END()
 //
 // Will produce the following TOML
-// [network]
 // [network.socket]
 // ip="0.0.0.0"
 // port=25565
@@ -28,21 +38,24 @@
 // and can be retrieved by passing the namespace and category to GetConfig where a specialization will return
 // the originally provided type
 // SSocketConfig config = CConfigManager::Get().GetConfig<config::network::socket>();
-
-#define CONFIG_GROUP_BEGIN(structName, configNamespace, group)                               \
-    namespace config { namespace configNamespace { struct group {}; } }                      \
-    class structName : public IConfigGroup {                                                 \
-    public:                                                                                  \
-        structName()                                                                         \
-            : IConfigGroup(typeid(config::configNamespace::group), #configNamespace, #group) \
+#define CONFIG_GROUP_BEGIN(structName, configNamespace, group)                                      \
+    class structName;                                                                               \
+    namespace config { namespace configNamespace { struct group {}; } }                             \
+    template<> struct ConfigGroupType<config::configNamespace::group> { using type = structName; }; \
+    class structName : public IConfigGroup {                                                        \
+    public:                                                                                         \
+        structName()                                                                                \
+            : IConfigGroup(typeid(config::configNamespace::group), #configNamespace, #group)        \
         {}
 
-#define CONFIG_GROUP_BEGIN_NO_NAMESPACE(structName, group) \
-    namespace config { struct group {}; }                      \
-    class structName : public IConfigGroup {                                                 \
-    public:                                                                                  \
-        structName()                                                                         \
-            : IConfigGroup(typeid(config::group), "", #group) \
+#define CONFIG_GROUP_BEGIN_NO_NAMESPACE(structName, group)                         \
+    namespace config { struct group {}; }                                          \
+    class structName;                                                              \
+    template<> struct ConfigGroupType<config::group> { using type = structName; }; \
+    class structName : public IConfigGroup {                                       \
+    public:                                                                        \
+        structName()                                                               \
+            : IConfigGroup(typeid(config::group), "", #group)                      \
         {}
 
 #define CONFIG_GROUP_MEMBER(type, variable, defaultValue)           \
@@ -90,8 +103,6 @@ struct ConfigStructTraits;
     };
 
 #define CONCAT(...) __VA_ARGS__
-
-struct IConfigGroup;
 
 struct IConfigValueVisitor
 {
@@ -230,8 +241,8 @@ struct IConfigurationManager
     virtual void RegisterConfigGroup(IConfigGroup* group) = 0;
 
     template<typename T>
-    IConfigGroup* GetConfigGroup() {
-        return GetConfigGroup(typeid(T));
+    ConfigGroupType<T>::type* GetConfigGroup() {
+        return static_cast<ConfigGroupType<T>::type*>(GetConfigGroup(typeid(T)));
     }
 
 protected:

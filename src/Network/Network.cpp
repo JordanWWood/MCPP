@@ -25,8 +25,7 @@ CNetwork::CNetwork(uint16_t hostPort)
     : m_listenSocket(std::make_unique<CTCPSocket>(eSF_Passive | eSF_Bind | eSF_Listen, "", hostPort))
 {
     REGISTER_CONFIG_GROUP(CNetworkConfig)
-
-    m_config = static_cast<CNetworkConfig*>(IGlobalEnvironment::Get().GetConfigManager().lock()->GetConfigGroup<config::network>());
+    m_config = IGlobalEnvironment::Get().GetConfigManager().lock()->GetConfigGroup<config::network>();
 
 #ifdef _WIN32
     WSADATA wsaData;
