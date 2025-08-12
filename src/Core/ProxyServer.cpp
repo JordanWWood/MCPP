@@ -20,12 +20,12 @@ CONFIG_GROUP_MEMBER(bool, IsOnline, true)
 CONFIG_GROUP_MEMBER(std::vector<SServer>, Servers, { {} })
 CONFIG_GROUP_END()
 
+REGISTER_CONFIG_GROUP(CProxyServerConfig)
+
 CProxyServer::CProxyServer()
     : m_quit(false)
 {
     MCPP_PROFILE_SCOPE()
-    // Register the config group for the proxy server
-    IGlobalEnvironment::Get().GetConfigManager().lock()->RegisterConfigGroup(new CProxyServerConfig());
     
     // Initialize the player list
     m_players.reserve(10); // Reserve space for 10 players initially

@@ -21,6 +21,7 @@ bool CSystem::Init()
         return false;
     m_pConfigurationManager = configManager;
     m_globalEnvironment.SetConfigManager(configManager);
+    CConfigRegistry::Get().registerAll(*configManager.get());
     
     m_pNetwork = std::make_shared<CNetwork>(25565); // TODO bring back config
     m_globalEnvironment.SetNetwork(m_pNetwork);

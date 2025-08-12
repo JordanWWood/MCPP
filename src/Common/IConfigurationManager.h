@@ -9,6 +9,7 @@
 #include <mutex>
 #include <type_traits>
 #include <utility>
+#include <functional>
 
 // Forward declarations for ConfigStructTraits are provided later.
 
