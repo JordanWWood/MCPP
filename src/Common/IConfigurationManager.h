@@ -248,3 +248,19 @@ struct IConfigurationManager
 protected:
     virtual IConfigGroup* GetConfigGroup(const std::type_index& typeIndex) = 0;
 };
+
+// Helper class to register config groups
+class CConfigRegistry {
+public:
+    using Factory = std::function<IConfigGroup* ()>;
+    static CConfigRegistry& Get() {
+        static CConfigRegistry inst;
+        return inst;
+    }
+    void add(Factory f) { factories.push_back(std::move(f)); }
+    void registerAll(IConfigurationManager& mgr) {
+        for (auto& f : factories) mgr.RegisterConfigGroup(f());
+    }
+private:
+    std::vector<Factory> factories;
+};
