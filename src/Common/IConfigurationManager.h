@@ -14,6 +14,7 @@
 
 struct IConfigGroup;
 
+// Generic Config Group Type so we can identify the type of a config group with template specialization.
 template<typename T, typename Enable = void>
 struct ConfigGroupType;
 
