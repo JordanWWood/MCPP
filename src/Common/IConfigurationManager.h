@@ -75,7 +75,7 @@ struct ConfigGroupType<T, std::enable_if_t<std::is_base_of_v<IConfigGroup, T>>>
     /* We can use a struct with a constructor to run some code for us in the context the macro is used */ \
     struct Register##structName {                                                                         \
         Register##structName() {                                                                          \
-            IGlobalEnvironment::Get().GetConfigManager().lock()->RegisterConfigGroup(new structName());   \
+            CConfigRegistry::Get().add([](){ return new structName; });                              \
         }                                                                                                 \
     };                                                                                                    \
     volatile Register##structName structName##Reg;
