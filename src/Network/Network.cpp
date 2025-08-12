@@ -14,6 +14,8 @@ CONFIG_GROUP_BEGIN_NO_NAMESPACE(CNetworkConfig, network)
 CONFIG_GROUP_MEMBER(int, port, 25565)
 CONFIG_GROUP_END()
 
+REGISTER_CONFIG_GROUP(CNetworkConfig)
+
 static void NetworkThread(CNetwork* instance)
 {
     OPTICK_THREAD("Network Thread");
@@ -24,7 +26,6 @@ static void NetworkThread(CNetwork* instance)
 CNetwork::CNetwork(uint16_t hostPort)
     : m_listenSocket(std::make_unique<CTCPSocket>(eSF_Passive | eSF_Bind | eSF_Listen, "", hostPort))
 {
-    REGISTER_CONFIG_GROUP(CNetworkConfig)
     m_config = IGlobalEnvironment::Get().GetConfigManager().lock()->GetConfigGroup<config::network>();
 
 #ifdef _WIN32
