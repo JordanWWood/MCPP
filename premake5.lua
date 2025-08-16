@@ -34,6 +34,9 @@ group "MCPP"
     include "src/Core"
     include "src/System"
     include "src/Launcher"
+	
+group "Tests"
+    include "src/Tests"
 
 group "Libs"
     include "vendor"

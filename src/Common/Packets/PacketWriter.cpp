@@ -9,7 +9,14 @@ CPacketWriter::CPacketWriter(uint32_t size): m_data(new char[size])
 
 void CPacketWriter::OnShort(uint16_t& value)
 {
-    // TODO
+    constexpr int size = sizeof(uint16_t);
+#ifdef LITTLEENDIAN
+    uint16_t swapped = forceswap16(value);
+    std::memcpy(m_data + m_size, &swapped, size);
+#else
+    std::memcpy(m_data + m_size, &value, size);
+#endif
+    m_size += size;
 }
 
 void CPacketWriter::OnVarInt(int& value)
@@ -49,6 +56,8 @@ void CPacketWriter::OnString(std::string& value, const uint32_t maxSize)
 
 void CPacketWriter::OnUInt8(uint8_t& value)
 {
+    m_data[m_size] = static_cast<char>(value);
+    m_size += sizeof(uint8_t);
 }
 
 void CPacketWriter::OnUUID(CUUID& uuid)
